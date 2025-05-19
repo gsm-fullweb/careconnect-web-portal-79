@@ -1,11 +1,15 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, FileText, Edit, Image, Save } from "lucide-react";
+import { Search, FileText, Edit, Image as ImageIcon, Save } from "lucide-react";
+import RichTextEditor from "@/components/admin/RichTextEditor";
+import ImageGallery from "@/components/admin/ImageGallery";
+import { supabase } from "@/integrations/supabase/client";
 
 // Sample content data
 const initialContent = [
@@ -80,8 +84,17 @@ const ContentManagement = () => {
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState<any>(null);
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [richTextMode, setRichTextMode] = useState(false);
+  const [htmlContent, setHtmlContent] = useState("");
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (selectedContent && selectedContent.type === "Text" && selectedContent.content.text) {
+      setHtmlContent(selectedContent.content.text);
+    }
+  }, [selectedContent]);
 
   // Filter content based on search term
   const filteredContent = content.filter(item => 
@@ -93,9 +106,20 @@ const ContentManagement = () => {
     setSelectedContent(item);
     setEditedContent(JSON.parse(JSON.stringify(item.content))); // Deep copy
     setIsEditing(false);
+    
+    // If it's a text content, set the HTML content for the rich text editor
+    if (item.type === "Text" && item.content.text) {
+      setHtmlContent(item.content.text);
+      setRichTextMode(false);
+    }
   };
 
   const handleSaveContent = () => {
+    // If we're in rich text mode and it's a text content, update the text with HTML content
+    if (richTextMode && selectedContent.type === "Text" && editedContent.text !== undefined) {
+      editedContent.text = htmlContent;
+    }
+    
     const updatedContent = content.map(item => {
       if (item.id === selectedContent.id) {
         const now = new Date().toISOString().split('T')[0];
@@ -117,11 +141,39 @@ const ContentManagement = () => {
       status: "Published"
     });
     setIsEditing(false);
+    setRichTextMode(false);
     
     toast({
       title: "Content updated",
       description: "Your changes have been published successfully.",
     });
+  };
+
+  const handleImageSelect = (url: string) => {
+    // Insert image URL into the appropriate field based on content type
+    if (selectedContent.type === "Image") {
+      setEditedContent({
+        ...editedContent,
+        imageUrl: url
+      });
+    }
+    
+    setShowImageGallery(false);
+  };
+
+  const toggleRichTextMode = () => {
+    if (!richTextMode && selectedContent.type === "Text" && editedContent.text) {
+      // When switching to rich text mode, use the current text as HTML
+      setHtmlContent(editedContent.text);
+    } else if (richTextMode && selectedContent.type === "Text") {
+      // When switching back to normal mode, update the text content
+      setEditedContent({
+        ...editedContent,
+        text: htmlContent
+      });
+    }
+    
+    setRichTextMode(!richTextMode);
   };
 
   const renderEditForm = () => {
@@ -156,14 +208,31 @@ const ContentManagement = () => {
           
           {editedContent.text !== undefined && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Text Content
-              </label>
-              <Textarea
-                value={editedContent.text}
-                onChange={(e) => setEditedContent({...editedContent, text: e.target.value})}
-                rows={4}
-              />
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Text Content
+                </label>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={toggleRichTextMode}
+                >
+                  {richTextMode ? "Simple Editor" : "Rich Text Editor"}
+                </Button>
+              </div>
+              
+              {richTextMode ? (
+                <RichTextEditor 
+                  value={htmlContent} 
+                  onChange={setHtmlContent}
+                />
+              ) : (
+                <Textarea
+                  value={editedContent.text}
+                  onChange={(e) => setEditedContent({...editedContent, text: e.target.value})}
+                  rows={4}
+                />
+              )}
             </div>
           )}
           
@@ -242,9 +311,18 @@ const ContentManagement = () => {
       return (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Image URL
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">
+                Image URL
+              </label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowImageGallery(true)}
+              >
+                Browse Gallery
+              </Button>
+            </div>
             <Input
               value={editedContent.imageUrl}
               onChange={(e) => setEditedContent({...editedContent, imageUrl: e.target.value})}
@@ -420,7 +498,7 @@ const ContentManagement = () => {
                             ? "bg-white text-careconnect-blue"
                             : "bg-careconnect-blue/10 text-careconnect-blue"
                         }`}>
-                          {item.type === "Text" ? <FileText size={16} /> : <Image size={16} />}
+                          {item.type === "Text" ? <FileText size={16} /> : <ImageIcon size={16} />}
                         </div>
                         <div>
                           <h3 className={`font-medium truncate ${
@@ -512,6 +590,16 @@ const ContentManagement = () => {
           </Card>
         </div>
       </div>
+      
+      {/* Image Gallery Dialog */}
+      <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Image Gallery</DialogTitle>
+          </DialogHeader>
+          <ImageGallery onSelect={handleImageSelect} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
