@@ -1,25 +1,49 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProtectedRouteProps {
   children: ReactNode;
 }
 
-// In a real application, this would be connected to a proper auth system
-// For now, this is a simple mock implementation
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const location = useLocation();
 
   useEffect(() => {
-    // Check if user is logged in
-    const checkAuth = () => {
-      const token = localStorage.getItem("admin-token");
-      setIsAuthenticated(!!token);
+    // Check if user is logged in with Supabase
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session) {
+        setIsAuthenticated(true);
+        // Also update local storage for compatibility with existing code
+        localStorage.setItem("admin-token", data.session.access_token);
+      } else {
+        setIsAuthenticated(false);
+        localStorage.removeItem("admin-token");
+      }
     };
     
     checkAuth();
+    
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session) {
+          setIsAuthenticated(true);
+          localStorage.setItem("admin-token", session.access_token);
+        } else {
+          setIsAuthenticated(false);
+          localStorage.removeItem("admin-token");
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // While checking authentication status

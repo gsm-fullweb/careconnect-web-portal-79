@@ -1,30 +1,52 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Menu, X, Home, Users, FileText, MessageSquare, User, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Get current user info
+    const getUserInfo = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserEmail(user.email);
+      }
+    };
+    
+    getUserInfo();
+  }, []);
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
   };
   
-  const handleLogout = () => {
-    // In a real app, this would call an auth service logout method
-    localStorage.removeItem("admin-token");
-    
-    toast({
-      title: "Logged out successfully",
-      description: "You have been logged out of the admin dashboard.",
-    });
-    
-    navigate("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem("admin-token");
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of the admin dashboard.",
+      });
+      
+      navigate("/admin/login");
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "There was a problem logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -146,7 +168,7 @@ const AdminLayout = () => {
               </div>
               <div>
                 <p className="font-medium text-gray-800">Admin User</p>
-                <p className="text-sm text-gray-500">admin@careconnect.com</p>
+                <p className="text-sm text-gray-500">{userEmail || "admin@careconnect.com"}</p>
               </div>
             </div>
             <Button

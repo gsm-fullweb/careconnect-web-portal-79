@@ -4,6 +4,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,16 +19,24 @@ const Login = () => {
     return <Navigate to="/admin" replace />;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate authentication - in a real app, this would call an API
-    // For demo purposes, allow login with any email and "admin123" as password
-    setTimeout(() => {
-      if (password === "admin123") {
-        // Set a token in localStorage to simulate authentication
-        localStorage.setItem("admin-token", "demo-token-123");
+    try {
+      // Use Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        throw error;
+      }
+
+      if (data.session) {
+        // Store the session token
+        localStorage.setItem("admin-token", data.session.access_token);
         
         toast({
           title: "Login successful",
@@ -35,16 +44,16 @@ const Login = () => {
         });
         
         navigate("/admin");
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Invalid email or password. Hint: Use any email and 'admin123' as password.",
-          variant: "destructive",
-        });
       }
-      
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message || "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -97,7 +106,7 @@ const Login = () => {
           </div>
           
           <div className="text-center text-sm text-gray-500">
-            <p>For demo purposes, use any email and "admin123" as password.</p>
+            <p>Sign in with your Supabase account credentials.</p>
           </div>
         </form>
         
