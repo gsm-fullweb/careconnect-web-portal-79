@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Image, Upload, Trash, Search } from "lucide-react";
+import { Image, Upload, Trash2, Search } from "lucide-react";
 
 interface ImageGalleryProps {
   onSelect: (url: string) => void;
@@ -221,7 +221,7 @@ const ImageGallery = ({ onSelect }: ImageGalleryProps) => {
                   size="icon" 
                   onClick={() => handleDeleteImage(image.name)}
                 >
-                  <Trash size={14} />
+                  <Trash2 size={14} />
                 </Button>
               </div>
             </div>

@@ -59,6 +59,36 @@ export type Database = {
           },
         ]
       }
+      content_items: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          last_updated: string
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          id?: string
+          last_updated?: string
+          status: string
+          title: string
+          type: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          last_updated?: string
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           created_at: string

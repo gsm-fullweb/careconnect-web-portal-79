@@ -6,80 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, FileText, Edit, Image as ImageIcon, Save } from "lucide-react";
+import { Search, FileText, Edit, Image as ImageIcon, Save, Plus, Trash2 } from "lucide-react";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import ImageGallery from "@/components/admin/ImageGallery";
 import { supabase } from "@/integrations/supabase/client";
-
-// Sample content data
-const initialContent = [
-  {
-    id: 1,
-    title: "Home Page - Hero Section",
-    type: "Text",
-    status: "Published",
-    lastUpdated: "2023-05-15",
-    content: {
-      heading: "Connecting Care with Compassion",
-      subheading: "Professional caregiving services tailored to your needs. We connect qualified caregivers with those who need assistance."
-    }
-  },
-  {
-    id: 2,
-    title: "Home Page - About Section",
-    type: "Text",
-    status: "Published",
-    lastUpdated: "2023-05-10",
-    content: {
-      heading: "About CareConnect",
-      text: "Founded in 2010, CareConnect has been on a mission to transform the way caregiving services are delivered. We believe that everyone deserves compassionate care tailored to their unique needs.",
-      stats: [
-        { label: "Certified Caregivers", value: "500+" },
-        { label: "Happy Clients", value: "1000+" },
-        { label: "Years of Experience", value: "15+" }
-      ]
-    }
-  },
-  {
-    id: 3,
-    title: "Services Page - Hero Image",
-    type: "Image",
-    status: "Published",
-    lastUpdated: "2023-04-28",
-    content: {
-      imageUrl: "https://images.unsplash.com/photo-1576765608622-067973a79f53?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      altText: "Caregiver helping elderly person"
-    }
-  },
-  {
-    id: 4,
-    title: "About Page - Mission Statement",
-    type: "Text",
-    status: "Published",
-    lastUpdated: "2023-04-20",
-    content: {
-      heading: "Our Mission",
-      text: "To enhance the quality of life for those who need care by connecting them with compassionate, skilled caregivers who provide personalized support that respects dignity and independence."
-    }
-  },
-  {
-    id: 5,
-    title: "Contact Page - Information",
-    type: "Text",
-    status: "Draft",
-    lastUpdated: "2023-05-18",
-    content: {
-      heading: "Get In Touch",
-      text: "Whether you're looking for care for yourself or a loved one, or if you have questions about our services, we're here to help. Reach out to us using the contact information below or fill out the form.",
-      email: "info@careconnect.com",
-      phone: "(123) 456-7890",
-      address: "123 Care Street, Anytown, ST 12345"
-    }
-  }
-];
+import { Spinner } from "@/components/ui/spinner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const ContentManagement = () => {
-  const [content, setContent] = useState(initialContent);
+  const [content, setContent] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedContent, setSelectedContent] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -87,14 +22,56 @@ const ContentManagement = () => {
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [richTextMode, setRichTextMode] = useState(false);
   const [htmlContent, setHtmlContent] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showAddContentDialog, setShowAddContentDialog] = useState(false);
+  const [newContentTitle, setNewContentTitle] = useState("");
+  const [newContentType, setNewContentType] = useState("Text");
+  const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
+  const [contentToDelete, setContentToDelete] = useState<string | null>(null);
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
 
   useEffect(() => {
     if (selectedContent && selectedContent.type === "Text" && selectedContent.content.text) {
       setHtmlContent(selectedContent.content.text);
     }
   }, [selectedContent]);
+
+  const fetchContent = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('*')
+        .order('last_updated', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        setContent(data.map(item => ({
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          status: item.status,
+          lastUpdated: new Date(item.last_updated).toISOString().split('T')[0],
+          content: item.content
+        })));
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error fetching content",
+        description: error.message || "Failed to load content items",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter content based on search term
   const filteredContent = content.filter(item => 
@@ -114,39 +91,170 @@ const ContentManagement = () => {
     }
   };
 
-  const handleSaveContent = () => {
-    // If we're in rich text mode and it's a text content, update the text with HTML content
-    if (richTextMode && selectedContent.type === "Text" && editedContent.text !== undefined) {
-      editedContent.text = htmlContent;
-    }
-    
-    const updatedContent = content.map(item => {
-      if (item.id === selectedContent.id) {
-        const now = new Date().toISOString().split('T')[0];
-        return {
-          ...item,
-          content: editedContent,
-          lastUpdated: now,
-          status: "Published"
-        };
+  const handleSaveContent = async () => {
+    try {
+      setIsSaving(true);
+      
+      // If we're in rich text mode and it's a text content, update the text with HTML content
+      if (richTextMode && selectedContent.type === "Text" && editedContent.text !== undefined) {
+        editedContent.text = htmlContent;
       }
-      return item;
-    });
+      
+      const now = new Date().toISOString();
+      
+      const { error } = await supabase
+        .from('content_items')
+        .update({
+          content: editedContent,
+          last_updated: now,
+          status: "Published"
+        })
+        .eq('id', selectedContent.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      const updatedContent = content.map(item => {
+        if (item.id === selectedContent.id) {
+          return {
+            ...item,
+            content: editedContent,
+            lastUpdated: now.split('T')[0],
+            status: "Published"
+          };
+        }
+        return item;
+      });
+      
+      setContent(updatedContent);
+      setSelectedContent({
+        ...selectedContent,
+        content: editedContent,
+        lastUpdated: now.split('T')[0],
+        status: "Published"
+      });
+      setIsEditing(false);
+      setRichTextMode(false);
+      
+      toast({
+        title: "Content updated",
+        description: "Your changes have been published successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error saving content",
+        description: error.message || "Failed to save changes",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddContent = async () => {
+    try {
+      if (!newContentTitle.trim()) {
+        toast({
+          title: "Title required",
+          description: "Please provide a title for the content item",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const newContent = {
+        title: newContentTitle,
+        type: newContentType,
+        status: "Draft",
+        content: newContentType === "Text" 
+          ? { heading: "", subheading: "", text: "" } 
+          : { imageUrl: "", altText: "" }
+      };
+
+      const { data, error } = await supabase
+        .from('content_items')
+        .insert([{
+          title: newContent.title,
+          type: newContent.type,
+          status: newContent.status,
+          content: newContent.content
+        }])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data[0]) {
+        const createdItem = {
+          id: data[0].id,
+          title: data[0].title,
+          type: data[0].type,
+          status: data[0].status,
+          lastUpdated: new Date(data[0].last_updated).toISOString().split('T')[0],
+          content: data[0].content
+        };
+        
+        setContent([createdItem, ...content]);
+        setNewContentTitle("");
+        setShowAddContentDialog(false);
+        
+        // Select the newly created content
+        handleSelectContent(createdItem);
+        setIsEditing(true);
+        
+        toast({
+          title: "Content created",
+          description: "New content item has been created.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error creating content",
+        description: error.message || "Failed to create content item",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteContent = async () => {
+    if (!contentToDelete) return;
     
-    setContent(updatedContent);
-    setSelectedContent({
-      ...selectedContent,
-      content: editedContent,
-      lastUpdated: new Date().toISOString().split('T')[0],
-      status: "Published"
-    });
-    setIsEditing(false);
-    setRichTextMode(false);
-    
-    toast({
-      title: "Content updated",
-      description: "Your changes have been published successfully.",
-    });
+    try {
+      const { error } = await supabase
+        .from('content_items')
+        .delete()
+        .eq('id', contentToDelete);
+      
+      if (error) throw error;
+      
+      // Update local state
+      const updatedContent = content.filter(item => item.id !== contentToDelete);
+      setContent(updatedContent);
+      
+      // Reset selected content if it was the deleted one
+      if (selectedContent && selectedContent.id === contentToDelete) {
+        setSelectedContent(null);
+        setEditedContent(null);
+      }
+      
+      toast({
+        title: "Content deleted",
+        description: "The content item has been removed.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error deleting content",
+        description: error.message || "Failed to delete content item",
+        variant: "destructive"
+      });
+    } finally {
+      setContentToDelete(null);
+      setConfirmDeleteDialogOpen(false);
+    }
+  };
+
+  const confirmDelete = (id: string) => {
+    setContentToDelete(id);
+    setConfirmDeleteDialogOpen(true);
   };
 
   const handleImageSelect = (url: string) => {
@@ -390,7 +498,10 @@ const ContentManagement = () => {
           {selectedContent.content.text && (
             <div>
               <h4 className="text-sm font-medium text-gray-500 mb-1">Text Content</h4>
-              <p className="text-gray-700">{selectedContent.content.text}</p>
+              <div 
+                className="text-gray-700" 
+                dangerouslySetInnerHTML={{ __html: selectedContent.content.text }}
+              />
             </div>
           )}
           
@@ -465,7 +576,17 @@ const ContentManagement = () => {
         <div className="lg:col-span-1">
           <Card className="h-full">
             <CardHeader className="pb-2">
-              <CardTitle>Content Items</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle>Content Items</CardTitle>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowAddContentDialog(true)}
+                >
+                  <Plus size={16} className="mr-1" />
+                  Add New
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="relative mb-4">
@@ -478,57 +599,80 @@ const ContentManagement = () => {
                 />
               </div>
               
-              <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
-                {filteredContent.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No content items found.</p>
-                ) : (
-                  filteredContent.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`p-3 rounded-md cursor-pointer transition-colors ${
-                        selectedContent?.id === item.id
-                          ? "bg-careconnect-blue text-white"
-                          : "hover:bg-gray-100"
-                      }`}
-                      onClick={() => handleSelectContent(item)}
-                    >
-                      <div className="flex items-start">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+              {isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="h-8 w-8 border-4 border-t-transparent border-careconnect-blue rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                  {filteredContent.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">No content items found.</p>
+                  ) : (
+                    filteredContent.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`p-3 rounded-md cursor-pointer transition-colors ${
                           selectedContent?.id === item.id
-                            ? "bg-white text-careconnect-blue"
-                            : "bg-careconnect-blue/10 text-careconnect-blue"
-                        }`}>
-                          {item.type === "Text" ? <FileText size={16} /> : <ImageIcon size={16} />}
-                        </div>
-                        <div>
-                          <h3 className={`font-medium truncate ${
-                            selectedContent?.id === item.id ? "text-white" : "text-gray-800"
-                          }`}>
-                            {item.title}
-                          </h3>
-                          <div className="flex items-center mt-1">
-                            <span className={`text-xs ${
-                              selectedContent?.id === item.id ? "text-white/80" : "text-gray-500"
-                            }`}>
-                              {item.type}
-                            </span>
-                            <span className={`mx-2 text-xs ${
-                              selectedContent?.id === item.id ? "text-white/60" : "text-gray-300"
-                            }`}>•</span>
-                            <span className={`text-xs ${
-                              selectedContent?.id === item.id
-                                ? "text-white/80"
-                                : item.status === "Published" ? "text-green-600" : "text-yellow-600"
-                            }`}>
-                              {item.status}
-                            </span>
+                            ? "bg-careconnect-blue text-white"
+                            : "hover:bg-gray-100"
+                        }`}
+                      >
+                        <div className="flex items-start">
+                          <div 
+                            className="flex-grow"
+                            onClick={() => handleSelectContent(item)}
+                          >
+                            <div className="flex items-start">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                                selectedContent?.id === item.id
+                                  ? "bg-white text-careconnect-blue"
+                                  : "bg-careconnect-blue/10 text-careconnect-blue"
+                              }`}>
+                                {item.type === "Text" ? <FileText size={16} /> : <ImageIcon size={16} />}
+                              </div>
+                              <div>
+                                <h3 className={`font-medium truncate ${
+                                  selectedContent?.id === item.id ? "text-white" : "text-gray-800"
+                                }`}>
+                                  {item.title}
+                                </h3>
+                                <div className="flex items-center mt-1">
+                                  <span className={`text-xs ${
+                                    selectedContent?.id === item.id ? "text-white/80" : "text-gray-500"
+                                  }`}>
+                                    {item.type}
+                                  </span>
+                                  <span className={`mx-2 text-xs ${
+                                    selectedContent?.id === item.id ? "text-white/60" : "text-gray-300"
+                                  }`}>•</span>
+                                  <span className={`text-xs ${
+                                    selectedContent?.id === item.id
+                                      ? "text-white/80"
+                                      : item.status === "Published" ? "text-green-600" : "text-yellow-600"
+                                  }`}>
+                                    {item.status}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`ml-2 ${selectedContent?.id === item.id ? "text-white hover:text-white/80" : "text-gray-400 hover:text-red-500"}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confirmDelete(item.id);
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                    ))
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -544,8 +688,13 @@ const ContentManagement = () => {
                     <Button 
                       onClick={handleSaveContent}
                       className="bg-careconnect-blue hover:bg-careconnect-blue/90"
+                      disabled={isSaving}
                     >
-                      <Save className="w-4 h-4 mr-2" />
+                      {isSaving ? (
+                        <div className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin mr-2"></div>
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
                       Save Changes
                     </Button>
                   ) : (
@@ -600,6 +749,90 @@ const ContentManagement = () => {
           <ImageGallery onSelect={handleImageSelect} />
         </DialogContent>
       </Dialog>
+      
+      {/* Add Content Dialog */}
+      <Dialog open={showAddContentDialog} onOpenChange={setShowAddContentDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Content</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Title
+              </label>
+              <Input
+                value={newContentTitle}
+                onChange={(e) => setNewContentTitle(e.target.value)}
+                placeholder="Enter content title"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Type
+              </label>
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="typeText"
+                    name="contentType"
+                    value="Text"
+                    checked={newContentType === "Text"}
+                    onChange={() => setNewContentType("Text")}
+                    className="mr-2"
+                  />
+                  <label htmlFor="typeText" className="text-sm">Text</label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="typeImage"
+                    name="contentType"
+                    value="Image"
+                    checked={newContentType === "Image"}
+                    onChange={() => setNewContentType("Image")}
+                    className="mr-2"
+                  />
+                  <label htmlFor="typeImage" className="text-sm">Image</label>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAddContentDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleAddContent}>
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={confirmDeleteDialogOpen} onOpenChange={setConfirmDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this content item? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteContent}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
