@@ -6,22 +6,22 @@ import { Link } from "react-router-dom";
 const services = [
   {
     title: "Cuidado Domiciliar",
-    description: "Cuidadores profissionais fornecendo assistência no conforto da sua casa.",
+    description: "Assistência profissional para idosos, pessoas com deficiência e pós-operatório no conforto do lar.",
     icon: "🏠",
   },
   {
-    title: "Cuidado Especializado",
-    description: "Cuidadores treinados para condições específicas como Alzheimer, Parkinson e mais.",
+    title: "Cuidados Especializados",
+    description: "Profissionais treinados para condições como Alzheimer, Parkinson, AVC e outras necessidades específicas.",
     icon: "⚕️",
   },
   {
-    title: "Cuidado de Alívio",
-    description: "Alívio temporário para cuidadores primários descansarem e recarregarem.",
-    icon: "🌿",
+    title: "Acompanhamento Hospitalar",
+    description: "Cuidadores que acompanham pacientes durante internação, garantindo conforto e suporte emocional.",
+    icon: "🏥",
   },
   {
-    title: "Suporte 24/7",
-    description: "Cuidado e suporte 24 horas por dia para aqueles que precisam de assistência contínua.",
+    title: "Assistência 24 Horas",
+    description: "Atendimento contínuo para pessoas que precisam de monitoramento e cuidados em período integral.",
     icon: "🕒",
   }
 ];
@@ -33,22 +33,22 @@ const Services = () => {
         <div className="text-center mb-16">
           <h2 className="mb-4">Nossos Serviços</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Oferecemos uma ampla gama de serviços de cuidado para atender às suas necessidades específicas.
+            Oferecemos uma ampla gama de serviços adaptados às necessidades individuais de cada pessoa.
           </p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {services.map((service, index) => (
-            <Card key={index} className="card-hover">
+            <Card key={index} className="card-hover border-t-4 border-t-careconnect-blue">
               <CardHeader>
                 <div className="text-4xl mb-4">{service.icon}</div>
-                <CardTitle>{service.title}</CardTitle>
+                <CardTitle className="text-careconnect-blue">{service.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base">{service.description}</CardDescription>
               </CardContent>
               <CardFooter>
-                <Button asChild variant="outline" className="w-full">
+                <Button asChild variant="outline" className="w-full border-careconnect-blue text-careconnect-blue hover:bg-careconnect-blue/5">
                   <Link to="/services">Saiba Mais</Link>
                 </Button>
               </CardFooter>

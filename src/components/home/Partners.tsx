@@ -4,33 +4,33 @@ import { useEffect, useState } from "react";
 const partnersData = [
   {
     id: 1,
-    name: "HealthPlus Insurance",
-    logo: "https://via.placeholder.com/150x80?text=HealthPlus"
+    name: "HospitalPlus",
+    logo: "https://via.placeholder.com/150x80?text=HospitalPlus"
   },
   {
     id: 2,
-    name: "MediNet",
-    logo: "https://via.placeholder.com/150x80?text=MediNet"
+    name: "RedeVida",
+    logo: "https://via.placeholder.com/150x80?text=RedeVida"
   },
   {
     id: 3,
-    name: "SeniorLife Foundation",
-    logo: "https://via.placeholder.com/150x80?text=SeniorLife"
+    name: "Instituto SeniorBem",
+    logo: "https://via.placeholder.com/150x80?text=SeniorBem"
   },
   {
     id: 4,
-    name: "Community Health Alliance",
-    logo: "https://via.placeholder.com/150x80?text=CHA"
+    name: "Aliança Saúde",
+    logo: "https://via.placeholder.com/150x80?text=AliançaSaúde"
   },
   {
     id: 5,
-    name: "CareTrust",
-    logo: "https://via.placeholder.com/150x80?text=CareTrust"
+    name: "Amparo Seguro",
+    logo: "https://via.placeholder.com/150x80?text=AmparoSeguro"
   },
   {
     id: 6,
-    name: "ElderCare Association",
-    logo: "https://via.placeholder.com/150x80?text=ElderCare"
+    name: "Associação Bem-Estar",
+    logo: "https://via.placeholder.com/150x80?text=Bem-Estar"
   }
 ];
 
@@ -40,10 +40,10 @@ const Partners = () => {
       <div className="container-custom">
         <div className="text-center mb-12">
           <h2 className="text-2xl font-semibold text-careconnect-dark mb-2">
-            Our Trusted Partners
+            Nossos Parceiros
           </h2>
           <p className="text-gray-600">
-            We work with leading healthcare and insurance providers to ensure comprehensive care.
+            Trabalhamos com instituições de saúde e seguradoras líderes para garantir um cuidado abrangente.
           </p>
         </div>
         
