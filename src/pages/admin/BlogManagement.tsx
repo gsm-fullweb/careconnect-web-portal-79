@@ -1,83 +1,194 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Edit, Trash, Plus, Eye } from "lucide-react";
+import { Search, Edit, Trash, Plus, Eye, Save } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
 
-// Sample blog posts data
-const initialPosts = [
-  {
-    id: 1,
-    title: "Tips for Supporting a Loved One with Dementia",
-    category: "Caregiving Tips",
-    author: "Dr. Lisa Johnson",
-    status: "Published",
-    date: "2023-05-12"
-  },
-  {
-    id: 2,
-    title: "Self-Care Strategies for Family Caregivers",
-    category: "Self-Care",
-    author: "Michael Chen",
-    status: "Published",
-    date: "2023-04-28"
-  },
-  {
-    id: 3,
-    title: "Understanding Medicare Coverage for Home Care",
-    category: "Healthcare",
-    author: "Sarah Chen",
-    status: "Published",
-    date: "2023-04-15"
-  },
-  {
-    id: 4,
-    title: "Creating a Safe Home Environment for Seniors",
-    category: "Home Safety",
-    author: "Robert Williams",
-    status: "Published",
-    date: "2023-03-30"
-  },
-  {
-    id: 5,
-    title: "The Benefits of Companion Care for Isolated Seniors",
-    category: "Companionship",
-    author: "Dr. Lisa Johnson",
-    status: "Published",
-    date: "2023-03-18"
-  },
-  {
-    id: 6,
-    title: "Nutrition Tips for Aging Adults",
-    category: "Nutrition",
-    author: "Michael Chen",
-    status: "Draft",
-    date: "2023-03-05"
-  }
-];
+// Define Blog Post type
+type BlogPost = {
+  id: string;
+  title: string;
+  category: string;
+  author: string;
+  status: "Published" | "Draft";
+  date: string;
+  excerpt: string;
+  content?: string;
+  slug?: string;
+};
 
 const BlogManagement = () => {
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All Categories");
+  const [statusFilter, setStatusFilter] = useState("All Status");
   const { toast } = useToast();
+  
+  // For editing
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [currentPost, setCurrentPost] = useState<BlogPost | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editExcerpt, setEditExcerpt] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editStatus, setEditStatus] = useState<"Published" | "Draft">("Draft");
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Filter posts based on search term
-  const filteredPosts = posts.filter(post => 
-    post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    post.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch blog posts from Supabase
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
-  const handleDeletePost = (id: number) => {
+  const fetchPosts = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("blog_posts")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // Format the posts
+      const formattedPosts = data.map(post => ({
+        id: post.id,
+        title: post.title,
+        category: post.category || "Uncategorized",
+        author: post.author || "Admin",
+        status: post.published ? "Published" : "Draft",
+        date: new Date(post.created_at).toISOString().split("T")[0],
+        excerpt: post.excerpt || "",
+        content: post.content,
+        slug: post.slug
+      }));
+
+      setPosts(formattedPosts);
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      toast({
+        title: "Error fetching posts",
+        description: "There was an error loading the blog posts.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Filter posts based on search term and filters
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           post.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           post.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = categoryFilter === "All Categories" || post.category === categoryFilter;
+    const matchesStatus = statusFilter === "All Status" || post.status === statusFilter;
+    
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  // Get unique categories from posts
+  const categories = ["All Categories", ...new Set(posts.map(post => post.category))];
+
+  // Handle delete post
+  const handleDeletePost = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this blog post?")) {
-      setPosts(posts.filter(post => post.id !== id));
+      try {
+        const { error } = await supabase
+          .from("blog_posts")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          throw error;
+        }
+        
+        setPosts(posts.filter(post => post.id !== id));
+        
+        toast({
+          title: "Blog post deleted",
+          description: "The blog post has been successfully deleted.",
+        });
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        toast({
+          title: "Error deleting post",
+          description: "There was an error deleting the blog post.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Handle edit post
+  const handleEditPost = (post: BlogPost) => {
+    setCurrentPost(post);
+    setEditTitle(post.title);
+    setEditCategory(post.category);
+    setEditExcerpt(post.excerpt || "");
+    setEditContent(post.content || "");
+    setEditStatus(post.status);
+    setIsEditSheetOpen(true);
+  };
+
+  // Save edited post
+  const handleSavePost = async () => {
+    if (!currentPost) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("blog_posts")
+        .update({
+          title: editTitle,
+          category: editCategory,
+          excerpt: editExcerpt,
+          content: editContent,
+          published: editStatus === "Published"
+        })
+        .eq("id", currentPost.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setPosts(posts.map(post => 
+        post.id === currentPost.id 
+          ? {
+              ...post,
+              title: editTitle,
+              category: editCategory,
+              excerpt: editExcerpt,
+              content: editContent,
+              status: editStatus
+            } 
+          : post
+      ));
+      
+      setIsEditSheetOpen(false);
       
       toast({
-        title: "Blog post deleted",
-        description: "The blog post has been successfully deleted.",
+        title: "Blog post updated",
+        description: "The blog post has been successfully updated.",
       });
+    } catch (error) {
+      console.error("Error updating post:", error);
+      toast({
+        title: "Error updating post",
+        description: "There was an error updating the blog post.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -113,56 +224,64 @@ const BlogManagement = () => {
               />
             </div>
             <div className="flex gap-2">
-              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue">
-                <option value="all">All Categories</option>
-                <option value="caregiving-tips">Caregiving Tips</option>
-                <option value="self-care">Self-Care</option>
-                <option value="healthcare">Healthcare</option>
-                <option value="home-safety">Home Safety</option>
-                <option value="companionship">Companionship</option>
-                <option value="nutrition">Nutrition</option>
+              <select 
+                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
+                {categories.map((category, index) => (
+                  <option key={index} value={category}>
+                    {category}
+                  </option>
+                ))}
               </select>
-              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue">
-                <option value="all">All Status</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
+              <select 
+                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="All Status">All Status</option>
+                <option value="Published">Published</option>
+                <option value="Draft">Draft</option>
               </select>
             </div>
           </div>
           
           {/* Blog Posts Table */}
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 text-left">
-                  <th className="px-4 py-3 text-sm font-medium text-gray-500 border-b">Title</th>
-                  <th className="px-4 py-3 text-sm font-medium text-gray-500 border-b">Category</th>
-                  <th className="px-4 py-3 text-sm font-medium text-gray-500 border-b">Author</th>
-                  <th className="px-4 py-3 text-sm font-medium text-gray-500 border-b">Status</th>
-                  <th className="px-4 py-3 text-sm font-medium text-gray-500 border-b">Date</th>
-                  <th className="px-4 py-3 text-sm font-medium text-gray-500 border-b">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPosts.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                      No blog posts found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPosts.map((post) => (
-                    <tr key={post.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-4">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Loading blog posts...</p>
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No blog posts found.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Author</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPosts.map((post) => (
+                    <TableRow key={post.id}>
+                      <TableCell>
                         <div className="max-w-xs truncate font-medium">{post.title}</div>
-                      </td>
-                      <td className="px-4 py-4">
+                      </TableCell>
+                      <TableCell>
                         <span className="px-2 py-1 rounded-full text-xs bg-careconnect-blue/10 text-careconnect-blue">
                           {post.category}
                         </span>
-                      </td>
-                      <td className="px-4 py-4">{post.author}</td>
-                      <td className="px-4 py-4">
+                      </TableCell>
+                      <TableCell>{post.author}</TableCell>
+                      <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           post.status === "Published" 
                             ? "bg-green-100 text-green-800" 
@@ -170,11 +289,15 @@ const BlogManagement = () => {
                         }`}>
                           {post.status}
                         </span>
-                      </td>
-                      <td className="px-4 py-4 text-gray-500">{post.date}</td>
-                      <td className="px-4 py-4">
+                      </TableCell>
+                      <TableCell className="text-gray-500">{post.date}</TableCell>
+                      <TableCell>
                         <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditPost(post)}
+                          >
                             <Edit className="w-4 h-4" />
                             <span className="sr-only">Edit</span>
                           </Button>
@@ -192,12 +315,12 @@ const BlogManagement = () => {
                             <span className="sr-only">Delete</span>
                           </Button>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
           
           {/* Pagination */}
@@ -216,6 +339,80 @@ const BlogManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Blog Post Sheet */}
+      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <SheetContent className="w-[90vw] sm:max-w-[600px] overflow-y-auto">
+          <SheetHeader className="mb-4">
+            <SheetTitle>Edit Blog Post</SheetTitle>
+            <SheetDescription>Make changes to your blog post here. Click save when you're done.</SheetDescription>
+          </SheetHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium mb-1">Title</label>
+              <Input
+                id="title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Post title"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium mb-1">Category</label>
+              <Input
+                id="category"
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value)}
+                placeholder="Post category"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="excerpt" className="block text-sm font-medium mb-1">Excerpt</label>
+              <Input
+                id="excerpt"
+                value={editExcerpt}
+                onChange={(e) => setEditExcerpt(e.target.value)}
+                placeholder="Short excerpt"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="content" className="block text-sm font-medium mb-1">Content</label>
+              <textarea
+                id="content"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={10}
+                placeholder="Blog content"
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-careconnect-blue focus:border-careconnect-blue"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium mb-1">Status</label>
+              <select
+                id="status"
+                value={editStatus}
+                onChange={(e) => setEditStatus(e.target.value as "Published" | "Draft")}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-careconnect-blue focus:border-careconnect-blue"
+              >
+                <option value="Published">Published</option>
+                <option value="Draft">Draft</option>
+              </select>
+            </div>
+          </div>
+          
+          <SheetFooter className="mt-6">
+            <Button type="submit" onClick={handleSavePost} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+              {!isSaving && <Save className="w-4 h-4 ml-2" />}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
