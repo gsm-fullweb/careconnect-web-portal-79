@@ -10,81 +10,81 @@ import { Button } from "@/components/ui/button";
 const blogPostsData = [
   {
     id: 1,
-    title: "Tips for Supporting a Loved One with Dementia",
-    excerpt: "Learn effective strategies to communicate and connect with someone experiencing dementia or memory loss.",
+    title: "Dicas para Apoiar um Ente Querido com Demência",
+    excerpt: "Aprenda estratégias eficazes para se comunicar e se conectar com alguém que está passando por demência ou perda de memória.",
     image: "https://images.unsplash.com/photo-1576765608622-067973a79f53?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Caregiving Tips",
-    date: "May 12, 2023",
-    author: "Dr. Lisa Johnson"
+    category: "Dicas de Cuidado",
+    date: "12 de Maio, 2023",
+    author: "Dra. Lisa Johnson"
   },
   {
     id: 2,
-    title: "Self-Care Strategies for Family Caregivers",
-    excerpt: "Caring for a loved one can be rewarding but also exhausting. Here's how to make sure you're taking care of yourself too.",
+    title: "Estratégias de Autocuidado para Cuidadores Familiares",
+    excerpt: "Cuidar de um ente querido pode ser gratificante, mas também exaustivo. Veja como garantir que você também esteja se cuidando.",
     image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Self-Care",
-    date: "April 28, 2023",
+    category: "Autocuidado",
+    date: "28 de Abril, 2023",
     author: "Michael Chen"
   },
   {
     id: 3,
-    title: "Understanding Medicare Coverage for Home Care",
-    excerpt: "Navigate the complexities of Medicare and learn what home care services might be covered under different plans.",
+    title: "Entendendo a Cobertura do Medicare para Cuidados Domiciliares",
+    excerpt: "Navegue pelas complexidades do Medicare e saiba quais serviços de cuidados domiciliares podem ser cobertos por diferentes planos.",
     image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Healthcare",
-    date: "April 15, 2023",
+    category: "Saúde",
+    date: "15 de Abril, 2023",
     author: "Sarah Chen"
   },
   {
     id: 4,
-    title: "Creating a Safe Home Environment for Seniors",
-    excerpt: "Simple modifications and safety measures to help prevent falls and accidents in the home.",
+    title: "Criando um Ambiente Doméstico Seguro para Idosos",
+    excerpt: "Modificações simples e medidas de segurança para ajudar a prevenir quedas e acidentes em casa.",
     image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Home Safety",
-    date: "March 30, 2023",
+    category: "Segurança Doméstica",
+    date: "30 de Março, 2023",
     author: "Robert Williams"
   },
   {
     id: 5,
-    title: "The Benefits of Companion Care for Isolated Seniors",
-    excerpt: "Loneliness can have serious health consequences. Learn how companion care can improve quality of life.",
+    title: "Os Benefícios do Cuidado Companionship para Idosos Isolados",
+    excerpt: "A solidão pode ter sérias consequências para a saúde. Saiba como o cuidado de companhia pode melhorar a qualidade de vida.",
     image: "https://images.unsplash.com/photo-1516307365426-bea591f05011?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Companionship",
-    date: "March 18, 2023",
-    author: "Dr. Lisa Johnson"
+    category: "Companhia",
+    date: "18 de Março, 2023",
+    author: "Dra. Lisa Johnson"
   },
   {
     id: 6,
-    title: "Nutrition Tips for Aging Adults",
-    excerpt: "Proper nutrition becomes increasingly important as we age. Learn about dietary needs and meal planning for seniors.",
+    title: "Dicas de Nutrição para Adultos Idosos",
+    excerpt: "Uma nutrição adequada torna-se cada vez mais importante conforme envelhecemos. Aprenda sobre necessidades dietéticas e planejamento de refeições para idosos.",
     image: "https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    category: "Nutrition",
-    date: "March 5, 2023",
+    category: "Nutrição",
+    date: "5 de Março, 2023",
     author: "Michael Chen"
   }
 ];
 
 // Sample categories
 const categories = [
-  "All Categories",
-  "Caregiving Tips",
-  "Self-Care",
-  "Healthcare",
-  "Home Safety",
-  "Companionship",
-  "Nutrition"
+  "Todas as Categorias",
+  "Dicas de Cuidado",
+  "Autocuidado",
+  "Saúde",
+  "Segurança Doméstica",
+  "Companhia",
+  "Nutrição"
 ];
 
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [selectedCategory, setSelectedCategory] = useState("Todas as Categorias");
   
   // Filter posts based on search and category
   const filteredPosts = blogPostsData.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = selectedCategory === "All Categories" || post.category === selectedCategory;
+    const matchesCategory = selectedCategory === "Todas as Categorias" || post.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
@@ -94,9 +94,9 @@ const Blog = () => {
       {/* Hero Section */}
       <div className="bg-careconnect-blue/90 text-white py-20">
         <div className="container-custom text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">CareConnect Blog</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">Blog CareConnect</h1>
           <p className="text-xl text-white/90 max-w-3xl mx-auto">
-            Insights, tips, and resources for caregivers and care recipients.
+            Insights, dicas e recursos para cuidadores e receptores de cuidados.
           </p>
         </div>
       </div>
@@ -109,7 +109,7 @@ const Blog = () => {
             <div className="flex flex-col md:flex-row gap-4 md:items-center mb-6">
               <div className="flex-grow">
                 <Input
-                  placeholder="Search blog posts..."
+                  placeholder="Pesquisar publicações do blog..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full"
@@ -132,18 +132,18 @@ const Blog = () => {
             
             {filteredPosts.length === 0 ? (
               <div className="text-center py-12">
-                <h3 className="text-2xl font-semibold mb-4">No results found</h3>
+                <h3 className="text-2xl font-semibold mb-4">Nenhum resultado encontrado</h3>
                 <p className="text-gray-600 mb-6">
-                  Try adjusting your search or filter to find what you're looking for.
+                  Tente ajustar sua pesquisa ou filtro para encontrar o que está procurando.
                 </p>
                 <Button
                   onClick={() => {
                     setSearchTerm("");
-                    setSelectedCategory("All Categories");
+                    setSelectedCategory("Todas as Categorias");
                   }}
                   variant="outline"
                 >
-                  Reset Filters
+                  Redefinir Filtros
                 </Button>
               </div>
             ) : (
@@ -171,12 +171,12 @@ const Blog = () => {
                       <p className="text-gray-700 line-clamp-3 mb-4">{post.excerpt}</p>
                       <div className="flex items-center text-sm text-gray-500">
                         <span className="mr-4">{post.date}</span>
-                        <span>By {post.author}</span>
+                        <span>Por {post.author}</span>
                       </div>
                     </CardContent>
                     <CardFooter>
                       <Button asChild variant="outline" className="w-full">
-                        <Link to={`/blog/${post.id}`}>Read More</Link>
+                        <Link to={`/blog/${post.id}`}>Ler Mais</Link>
                       </Button>
                     </CardFooter>
                   </Card>
@@ -190,22 +190,22 @@ const Blog = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div>
                 <h2 className="text-2xl md:text-3xl font-semibold mb-4">
-                  Subscribe to Our Newsletter
+                  Inscreva-se em Nossa Newsletter
                 </h2>
                 <p className="text-gray-700 mb-4">
-                  Stay updated with our latest articles, caregiving tips, and resources.
-                  We'll deliver them straight to your inbox.
+                  Mantenha-se atualizado com nossos artigos mais recentes, dicas de cuidado e recursos.
+                  Entregaremos diretamente à sua caixa de entrada.
                 </p>
                 <p className="text-gray-500 text-sm">
-                  We respect your privacy and will never share your information.
+                  Respeitamos sua privacidade e nunca compartilharemos suas informações.
                 </p>
               </div>
               <div>
                 <form className="space-y-4">
-                  <Input placeholder="Your Name" />
-                  <Input placeholder="Your Email" type="email" />
+                  <Input placeholder="Seu Nome" />
+                  <Input placeholder="Seu Email" type="email" />
                   <Button className="w-full bg-careconnect-blue hover:bg-careconnect-blue/90">
-                    Subscribe Now
+                    Inscrever-se Agora
                   </Button>
                 </form>
               </div>
