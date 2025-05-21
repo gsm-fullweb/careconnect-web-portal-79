@@ -59,6 +59,93 @@ export type Database = {
           },
         ]
       }
+      candidatos_cuidadores_rows: {
+        Row: {
+          ativo: string | null
+          cargo: string | null
+          cep: string
+          cidade: string
+          cursos: string | null
+          data_cadastro: string | null
+          data_nascimento: string
+          desconfortos_atividades: string | null
+          descricao: string | null
+          descricao_experiencia: string | null
+          disponibilidade_horarios: string | null
+          disponivel_dormir_local: string
+          email: string
+          endereco: string
+          escolaridade: string
+          experiencia: string | null
+          fumante: string
+          id: number
+          nome: string
+          perfil_profissional: string | null
+          possui_experiencia: string
+          possui_filhos: boolean
+          referencias: string | null
+          status_candidatura: string
+          telefone: string
+          ultima_atualizacao: string | null
+        }
+        Insert: {
+          ativo?: string | null
+          cargo?: string | null
+          cep: string
+          cidade: string
+          cursos?: string | null
+          data_cadastro?: string | null
+          data_nascimento: string
+          desconfortos_atividades?: string | null
+          descricao?: string | null
+          descricao_experiencia?: string | null
+          disponibilidade_horarios?: string | null
+          disponivel_dormir_local: string
+          email: string
+          endereco: string
+          escolaridade: string
+          experiencia?: string | null
+          fumante: string
+          id?: number
+          nome: string
+          perfil_profissional?: string | null
+          possui_experiencia: string
+          possui_filhos: boolean
+          referencias?: string | null
+          status_candidatura: string
+          telefone: string
+          ultima_atualizacao?: string | null
+        }
+        Update: {
+          ativo?: string | null
+          cargo?: string | null
+          cep?: string
+          cidade?: string
+          cursos?: string | null
+          data_cadastro?: string | null
+          data_nascimento?: string
+          desconfortos_atividades?: string | null
+          descricao?: string | null
+          descricao_experiencia?: string | null
+          disponibilidade_horarios?: string | null
+          disponivel_dormir_local?: string
+          email?: string
+          endereco?: string
+          escolaridade?: string
+          experiencia?: string | null
+          fumante?: string
+          id?: number
+          nome?: string
+          perfil_profissional?: string | null
+          possui_experiencia?: string
+          possui_filhos?: boolean
+          referencias?: string | null
+          status_candidatura?: string
+          telefone?: string
+          ultima_atualizacao?: string | null
+        }
+        Relationships: []
+      }
       content_items: {
         Row: {
           content: Json
