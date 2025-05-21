@@ -13,6 +13,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import SubscriptionPlans from "./pages/SubscriptionPlans";
 
 // Admin Pages
 import Login from "./pages/admin/Login";
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogPost />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/plans" element={<SubscriptionPlans />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<Login />} />

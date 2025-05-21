@@ -56,10 +56,16 @@ const Services = () => {
           ))}
         </div>
         
-        <div className="text-center mt-12">
+        <div className="text-center mt-12 space-y-4">
           <Button asChild size="lg" className="bg-careconnect-blue hover:bg-careconnect-blue/90">
             <Link to="/services">Ver Todos os Serviços</Link>
           </Button>
+          <div className="mt-6">
+            <p className="text-lg mb-3">Conheça nossos planos de assinatura e escolha o melhor para suas necessidades</p>
+            <Button asChild size="lg" variant="outline" className="border-careconnect-blue text-careconnect-blue hover:bg-careconnect-blue/5">
+              <Link to="/plans">Ver Planos de Assinatura</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </section>
