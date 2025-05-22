@@ -22,6 +22,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import UsersManagement from "./pages/admin/UsersManagement";
 import ContentManagement from "./pages/admin/ContentManagement";
 import BlogManagement from "./pages/admin/BlogManagement";
+import BlogPostEditor from "./pages/admin/BlogPostEditor";
 import TestimonialsManagement from "./pages/admin/TestimonialsManagement";
 import PartnersManagement from "./pages/admin/PartnersManagement";
 import ProtectedRoute from "./components/admin/ProtectedRoute";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="users" element={<UsersManagement />} />
             <Route path="content" element={<ContentManagement />} />
             <Route path="blog" element={<BlogManagement />} />
+            <Route path="blog/edit/:id" element={<BlogPostEditor />} />
             <Route path="testimonials" element={<TestimonialsManagement />} />
             <Route path="partners" element={<PartnersManagement />} />
           </Route>
