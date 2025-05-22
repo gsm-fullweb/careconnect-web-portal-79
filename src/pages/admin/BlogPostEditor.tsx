@@ -53,6 +53,7 @@ const BlogPostEditor = () => {
   
   const fetchPost = async () => {
     try {
+      console.log("Fetching post with ID:", id);
       const { data, error } = await supabase
         .from("blog_posts")
         .select("*")
@@ -64,6 +65,7 @@ const BlogPostEditor = () => {
       }
       
       if (data) {
+        console.log("Fetched post data:", data);
         setPost(data as BlogPost);
       }
     } catch (error: any) {
@@ -152,6 +154,15 @@ const BlogPostEditor = () => {
         }).select();
       } else {
         // Update existing post
+        console.log("Updating post with ID:", id, "Data:", {
+          title: post.title,
+          excerpt: post.excerpt,
+          content: post.content,
+          published: post.published,
+          slug: post.slug,
+          cover_image: post.cover_image
+        });
+        
         result = await supabase
           .from("blog_posts")
           .update({
@@ -163,15 +174,18 @@ const BlogPostEditor = () => {
             cover_image: post.cover_image,
             updated_at: new Date().toISOString()
           })
-          .eq("id", post.id)
+          .eq("id", id) // Use the ID from URL params, not from post state
           .select();
       }
       
       const { error, data } = result;
       
       if (error) {
+        console.error("Error saving post:", error);
         throw error;
       }
+      
+      console.log("Post saved successfully:", data);
       
       toast({
         title: "Success",
@@ -182,6 +196,7 @@ const BlogPostEditor = () => {
       navigate("/admin/blog");
       
     } catch (error: any) {
+      console.error("Error in handleSave:", error);
       toast({
         title: "Error",
         description: `Failed to save blog post: ${error.message}`,
