@@ -54,12 +54,37 @@ const BlogPostEditor = () => {
   const fetchPost = async () => {
     try {
       console.log("Fetching post with ID:", id);
-      const { data, error } = await supabase
+      
+      // First try to fetch the post using the ID directly
+      let query = supabase
         .from("blog_posts")
         .select("*")
-        .eq("id", id)
-        .single();
+        .eq("id", id);
         
+      let { data, error } = await query.single();
+      
+      // If there's an error (likely due to invalid UUID format), try to fetch by numeric ID
+      if (error && error.code === "22P02") {
+        console.log("ID appears to be numeric, trying to fetch posts and find by position");
+        
+        // Get all posts ordered by creation date
+        const allPostsResult = await supabase
+          .from("blog_posts")
+          .select("*")
+          .order("created_at", { ascending: false });
+          
+        if (allPostsResult.error) {
+          throw allPostsResult.error;
+        }
+        
+        // Get post at position (id-1) if id is a valid number
+        const numericId = parseInt(id || "0", 10);
+        if (numericId > 0 && allPostsResult.data && allPostsResult.data.length >= numericId) {
+          data = allPostsResult.data[numericId - 1];
+          error = null;
+        }
+      }
+      
       if (error) {
         throw error;
       }
@@ -69,6 +94,7 @@ const BlogPostEditor = () => {
         setPost(data as BlogPost);
       }
     } catch (error: any) {
+      console.error("Error fetching post:", error);
       toast({
         title: "Error",
         description: `Failed to fetch blog post: ${error.message}`,
@@ -153,8 +179,8 @@ const BlogPostEditor = () => {
           author_id: post.author_id || null // Use current user ID ideally
         }).select();
       } else {
-        // Update existing post
-        console.log("Updating post with ID:", id, "Data:", {
+        // Update existing post using the post.id from state
+        console.log("Updating post with ID:", post.id, "Data:", {
           title: post.title,
           excerpt: post.excerpt,
           content: post.content,
@@ -174,7 +200,7 @@ const BlogPostEditor = () => {
             cover_image: post.cover_image,
             updated_at: new Date().toISOString()
           })
-          .eq("id", id) // Use the ID from URL params, not from post state
+          .eq("id", post.id) // Use the post.id from state, not from URL params
           .select();
       }
       
