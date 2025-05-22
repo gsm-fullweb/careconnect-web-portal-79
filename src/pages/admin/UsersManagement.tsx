@@ -45,7 +45,9 @@ const UsersManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [isViewDetailsModalOpen, setIsViewDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<CandidatoCuidador | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<CandidatoCuidador>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cargoFilter, setCargoFilter] = useState("all");
@@ -128,6 +130,78 @@ const UsersManagement = () => {
   const handleViewDetails = (user: CandidatoCuidador) => {
     setSelectedUser(user);
     setIsViewDetailsModalOpen(true);
+  };
+
+  const handleEditClick = (user: CandidatoCuidador) => {
+    setSelectedUser(user);
+    setEditFormData({...user}); // Initialize form with current user data
+    setIsEditModalOpen(true);
+    setIsViewDetailsModalOpen(false);
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    
+    // Handle checkbox inputs separately
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setEditFormData(prev => ({ ...prev, [name]: checked }));
+      return;
+    }
+    
+    setEditFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedUser) return;
+    
+    try {
+      setLoading(true);
+      
+      // Add updated timestamp
+      const updateData = {
+        ...editFormData,
+        ultima_atualizacao: new Date().toISOString()
+      };
+      
+      const { error: updateError } = await supabase
+        .from('candidatos_cuidadores_rows')
+        .update(updateData)
+        .eq('id', selectedUser.id);
+        
+      if (updateError) throw updateError;
+      
+      // Update local state with edited data
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === selectedUser.id 
+            ? { ...user, ...updateData } as CandidatoCuidador
+            : user
+        )
+      );
+      
+      // Close modal and reset state
+      setIsEditModalOpen(false);
+      setSelectedUser(null);
+      setEditFormData({});
+      
+      toast({
+        title: "Candidato atualizado",
+        description: "As informações do candidato foram atualizadas com sucesso.",
+      });
+      
+    } catch (error) {
+      console.error("Erro ao atualizar candidato:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o candidato. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Get unique cargo values from the users data
@@ -392,11 +466,272 @@ const UsersManagement = () => {
                 </Button>
                 <Button 
                   className="bg-careconnect-blue hover:bg-careconnect-blue/90"
+                  onClick={() => handleEditClick(selectedUser)}
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Editar Candidato
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Edit Modal */}
+      {isEditModalOpen && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsEditModalOpen(false)}></div>
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold">Editar Candidato</h2>
+                <Button variant="ghost" onClick={() => setIsEditModalOpen(false)}>
+                  Fechar
+                </Button>
+              </div>
+              
+              <form onSubmit={handleSaveEdit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Informações Pessoais */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-gray-700 border-b pb-2">Informações Pessoais</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                      <Input 
+                        name="nome"
+                        value={editFormData.nome || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <Input 
+                        name="email" 
+                        type="email"
+                        value={editFormData.email || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                      <Input 
+                        name="telefone"
+                        value={editFormData.telefone || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                      <Input 
+                        name="data_nascimento"
+                        value={editFormData.data_nascimento || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+                      <Input 
+                        name="cidade"
+                        value={editFormData.cidade || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+                      <Input 
+                        name="endereco"
+                        value={editFormData.endereco || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                      <Input 
+                        name="cep"
+                        value={editFormData.cep || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Fumante</label>
+                      <select
+                        name="fumante"
+                        value={editFormData.fumante || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        required
+                      >
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Possui Filhos</label>
+                      <div className="flex items-center space-x-2">
+                        <input 
+                          type="checkbox"
+                          name="possui_filhos"
+                          checked={!!editFormData.possui_filhos}
+                          onChange={(e) => setEditFormData(prev => ({ ...prev, possui_filhos: e.target.checked }))}
+                          className="h-4 w-4 rounded border-gray-300 text-careconnect-blue focus:ring-careconnect-blue"
+                        />
+                        <span>Sim</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Formação e Experiência */}
+                  <div className="space-y-4">
+                    <h3 className="font-medium text-gray-700 border-b pb-2">Formação e Experiência</h3>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Escolaridade</label>
+                      <Input 
+                        name="escolaridade"
+                        value={editFormData.escolaridade || ''}
+                        onChange={handleEditInputChange}
+                        required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cursos</label>
+                      <Input 
+                        name="cursos"
+                        value={editFormData.cursos || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                      <Input 
+                        name="cargo"
+                        value={editFormData.cargo || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Possui Experiência</label>
+                      <select
+                        name="possui_experiencia"
+                        value={editFormData.possui_experiencia || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        required
+                      >
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Descrição da Experiência</label>
+                      <textarea 
+                        name="descricao_experiencia"
+                        value={editFormData.descricao_experiencia || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        rows={3}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Disponibilidade de Horários</label>
+                      <Input 
+                        name="disponibilidade_horarios"
+                        value={editFormData.disponibilidade_horarios || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Disponível para Dormir no Local</label>
+                      <select
+                        name="disponivel_dormir_local"
+                        value={editFormData.disponivel_dormir_local || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        required
+                      >
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Referências</label>
+                      <textarea 
+                        name="referencias"
+                        value={editFormData.referencias || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        rows={2}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Perfil Profissional</label>
+                      <textarea 
+                        name="perfil_profissional"
+                        value={editFormData.perfil_profissional || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        rows={2}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Status da Candidatura</label>
+                      <select
+                        name="status_candidatura"
+                        value={editFormData.status_candidatura || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        required
+                      >
+                        <option value="Em análise">Em análise</option>
+                        <option value="Aprovado">Aprovado</option>
+                        <option value="Rejeitado">Rejeitado</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 flex justify-end space-x-3">
+                  <Button 
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-careconnect-blue hover:bg-careconnect-blue/90"
+                    disabled={loading}
+                  >
+                    {loading ? "Salvando..." : "Salvar Alterações"}
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
