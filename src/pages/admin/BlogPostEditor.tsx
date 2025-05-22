@@ -168,18 +168,21 @@ const BlogPostEditor = () => {
       let result;
       
       if (isNewPost) {
-        // Create new post
+        // Create new post - remove the empty id field to let Supabase generate one
+        const { id, ...postWithoutId } = post;
+        console.log("Creating new post with data:", postWithoutId);
+        
         result = await supabase.from("blog_posts").insert({
-          title: post.title,
-          excerpt: post.excerpt,
-          content: post.content,
-          published: post.published,
-          slug: post.slug,
-          cover_image: post.cover_image,
+          ...postWithoutId,
           author_id: post.author_id || null // Use current user ID ideally
         }).select();
       } else {
         // Update existing post using the post.id from state
+        // Only proceed if we have a valid ID
+        if (!post.id) {
+          throw new Error("Cannot update post: Missing post ID");
+        }
+        
         console.log("Updating post with ID:", post.id, "Data:", {
           title: post.title,
           excerpt: post.excerpt,
