@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/hooks/useAuth";
 
 // Public Pages
 import Home from "./pages/Home";
@@ -14,6 +15,8 @@ import BlogPost from "./pages/BlogPost";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import SubscriptionPlans from "./pages/SubscriptionPlans";
+import PreCadastro from "./pages/PreCadastro";
+import CadastrarCuidador from "./pages/CadastrarCuidador";
 
 // Admin Pages
 import Login from "./pages/admin/Login";
@@ -31,43 +34,47 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogPost />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/plans" element={<SubscriptionPlans />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<Login />} />
-          
-          {/* Protected Admin Routes */}
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }>
-            <Route path="" element={<Dashboard />} />
-            <Route path="users" element={<UsersManagement />} />
-            <Route path="content" element={<ContentManagement />} />
-            <Route path="blog" element={<BlogManagement />} />
-            <Route path="blog/edit/:id" element={<BlogPostEditor />} />
-            <Route path="testimonials" element={<TestimonialsManagement />} />
-            <Route path="partners" element={<PartnersManagement />} />
-          </Route>
-          
-          {/* 404 Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:id" element={<BlogPost />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/plans" element={<SubscriptionPlans />} />
+            <Route path="/pre-cadastro" element={<PreCadastro />} />
+            <Route path="/cadastrar-cuidador" element={<CadastrarCuidador />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<Login />} />
+            
+            {/* Protected Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="" element={<Dashboard />} />
+              <Route path="users" element={<UsersManagement />} />
+              <Route path="content" element={<ContentManagement />} />
+              <Route path="blog" element={<BlogManagement />} />
+              <Route path="blog/edit/:id" element={<BlogPostEditor />} />
+              <Route path="testimonials" element={<TestimonialsManagement />} />
+              <Route path="partners" element={<PartnersManagement />} />
+            </Route>
+            
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

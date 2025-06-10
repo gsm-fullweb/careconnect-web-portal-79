@@ -146,6 +146,96 @@ export type Database = {
         }
         Relationships: []
       }
+      caregivers: {
+        Row: {
+          address: string | null
+          availability: string | null
+          birth_date: string | null
+          care_category: string | null
+          cep: string | null
+          city: string | null
+          coren: string | null
+          courses: string | null
+          created_at: string
+          crefito: string | null
+          crm: string | null
+          education: string | null
+          email: string
+          experience: string | null
+          has_children: boolean | null
+          id: string
+          name: string
+          reference1: string | null
+          reference2: string | null
+          reference3: string | null
+          sleep_at_client: boolean | null
+          smoker: boolean | null
+          state: string | null
+          status: string | null
+          updated_at: string
+          user_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          availability?: string | null
+          birth_date?: string | null
+          care_category?: string | null
+          cep?: string | null
+          city?: string | null
+          coren?: string | null
+          courses?: string | null
+          created_at?: string
+          crefito?: string | null
+          crm?: string | null
+          education?: string | null
+          email: string
+          experience?: string | null
+          has_children?: boolean | null
+          id?: string
+          name: string
+          reference1?: string | null
+          reference2?: string | null
+          reference3?: string | null
+          sleep_at_client?: boolean | null
+          smoker?: boolean | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          availability?: string | null
+          birth_date?: string | null
+          care_category?: string | null
+          cep?: string | null
+          city?: string | null
+          coren?: string | null
+          courses?: string | null
+          created_at?: string
+          crefito?: string | null
+          crm?: string | null
+          education?: string | null
+          email?: string
+          experience?: string | null
+          has_children?: boolean | null
+          id?: string
+          name?: string
+          reference1?: string | null
+          reference2?: string | null
+          reference3?: string | null
+          sleep_at_client?: boolean | null
+          smoker?: boolean | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       content_items: {
         Row: {
           content: Json
@@ -218,6 +308,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          type: string | null
           updated_at: string
           user_role: string | null
         }
@@ -229,6 +320,7 @@ export type Database = {
           id: string
           last_name?: string | null
           phone?: string | null
+          type?: string | null
           updated_at?: string
           user_role?: string | null
         }
@@ -240,6 +332,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          type?: string | null
           updated_at?: string
           user_role?: string | null
         }
@@ -248,8 +341,10 @@ export type Database = {
       testimonials: {
         Row: {
           avatar_url: string | null
+          caregiver_id: string | null
           content: string
           created_at: string
+          customer_id: string | null
           id: string
           name: string
           published: boolean | null
@@ -259,8 +354,10 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          caregiver_id?: string | null
           content: string
           created_at?: string
+          customer_id?: string | null
           id?: string
           name: string
           published?: boolean | null
@@ -270,8 +367,10 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          caregiver_id?: string | null
           content?: string
           created_at?: string
+          customer_id?: string | null
           id?: string
           name?: string
           published?: boolean | null
@@ -279,7 +378,15 @@ export type Database = {
           role?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_caregiver_id_fkey"
+            columns: ["caregiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
