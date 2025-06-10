@@ -46,9 +46,8 @@ export default function Obrigado() {
   };
 
   const handleGoToLogin = () => {
-    // Aqui você pode redirecionar para a página de login do painel do candidato
-    // Por enquanto, vou redirecionar para home
-    window.location.href = "/";
+    // Redirecionar para o painel do cuidador
+    window.location.href = "/painel-cuidador";
   };
 
   if (!credentials) {

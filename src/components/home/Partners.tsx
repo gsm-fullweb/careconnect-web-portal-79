@@ -5,32 +5,32 @@ const partnersData = [
   {
     id: 1,
     name: "HospitalPlus",
-    logo: "https://via.placeholder.com/150x80?text=HospitalPlus"
+    logo: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=150&h=80&fit=crop&crop=center"
   },
   {
     id: 2,
     name: "RedeVida",
-    logo: "https://via.placeholder.com/150x80?text=RedeVida"
+    logo: "https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=150&h=80&fit=crop&crop=center"
   },
   {
     id: 3,
     name: "Instituto SeniorBem",
-    logo: "https://via.placeholder.com/150x80?text=SeniorBem"
+    logo: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=150&h=80&fit=crop&crop=center"
   },
   {
     id: 4,
     name: "Aliança Saúde",
-    logo: "https://via.placeholder.com/150x80?text=AliançaSaúde"
+    logo: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=150&h=80&fit=crop&crop=center"
   },
   {
     id: 5,
     name: "Amparo Seguro",
-    logo: "https://via.placeholder.com/150x80?text=AmparoSeguro"
+    logo: "https://images.unsplash.com/photo-1504813184591-01572f98c85f?w=150&h=80&fit=crop&crop=center"
   },
   {
     id: 6,
     name: "Associação Bem-Estar",
-    logo: "https://via.placeholder.com/150x80?text=Bem-Estar"
+    logo: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=80&fit=crop&crop=center"
   }
 ];
 
@@ -56,7 +56,7 @@ const Partners = () => {
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className="h-16 object-contain"
+                className="h-16 object-contain rounded"
               />
             </div>
           ))}

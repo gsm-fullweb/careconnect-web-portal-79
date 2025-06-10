@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,7 @@ import SubscriptionPlans from "./pages/SubscriptionPlans";
 import PreCadastro from "./pages/PreCadastro";
 import CadastrarCuidador from "./pages/CadastrarCuidador";
 import Obrigado from "./pages/Obrigado";
+import PainelCuidador from "./pages/PainelCuidador";
 
 // Admin Pages
 import Login from "./pages/admin/Login";
@@ -51,6 +53,7 @@ const App = () => (
             <Route path="/pre-cadastro" element={<PreCadastro />} />
             <Route path="/cadastrar-cuidador" element={<CadastrarCuidador />} />
             <Route path="/obrigado" element={<Obrigado />} />
+            <Route path="/painel-cuidador" element={<PainelCuidador />} />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<Login />} />
