@@ -65,6 +65,7 @@ export type Database = {
           cargo: string | null
           cep: string
           cidade: string
+          coren: string | null
           cursos: string | null
           data_cadastro: string | null
           data_nascimento: string
@@ -93,6 +94,7 @@ export type Database = {
           cargo?: string | null
           cep: string
           cidade: string
+          coren?: string | null
           cursos?: string | null
           data_cadastro?: string | null
           data_nascimento: string
@@ -121,6 +123,7 @@ export type Database = {
           cargo?: string | null
           cep?: string
           cidade?: string
+          coren?: string | null
           cursos?: string | null
           data_cadastro?: string | null
           data_nascimento?: string

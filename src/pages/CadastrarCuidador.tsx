@@ -1,3 +1,6 @@
+
+"use client";
+
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card } from "@/components/ui/card";
@@ -18,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -171,40 +175,43 @@ export default function CadastrarCuidador() {
   };
 
   const onSubmit = async (formData: FormSchemaType) => {
-    let candidateId = null;
-
     const fallbackUser = localStorage.getItem('fallback_user');
     if (!fallbackUser) {
-      toast.error("Você precisa estar logado para submeter o formulário.");
+      toast.error("Erro: dados de pré-cadastro não encontrados. Refaça o pré-cadastro.");
+      window.location.href = "/pre-cadastro";
       return;
     }
+
     const fallbackData = JSON.parse(fallbackUser);
-    candidateId = fallbackData.id;
+    const candidateId = fallbackData.id;
 
     setIsSubmitting(true);
     console.log("Dados do formulário:", formData);
 
     try {
+      // Atualizar o registro existente na tabela candidatos_cuidadores_rows
       const updateData = {
         nome: formData.name,
         email: formData.email.toLowerCase().trim(),
         telefone: formData.whatsapp,
         data_nascimento: formData.birthDate,
-        possui_filhos: formData.hasChildren,
         fumante: formData.smoker ? 'Sim' : 'Não',
-        cep: formData.cep,
-        endereco: formData.address,
-        cidade: formData.city,
         escolaridade: formData.education,
         cursos: formData.courses || '',
+        possui_experiencia: 'Sim', // Como tem campo de experiência, assumimos que sim
+        descricao_experiencia: formData.experience,
         disponibilidade_horarios: formData.availability,
         disponivel_dormir_local: formData.sleepAtClient ? 'Sim' : 'Não',
+        referencias: `${formData.reference1} | ${formData.reference2} | ${formData.reference3}`,
+        cidade: formData.city,
+        endereco: formData.address,
+        cep: formData.cep,
+        possui_filhos: formData.hasChildren,
+        ultima_atualizacao: new Date().toISOString().split('T')[0],
+        status_candidatura: 'Cadastro completo - Em análise',
         cargo: formData.careCategory,
-        descricao_experiencia: formData.experience,
-        referencias: `Ref 1: ${formData.reference1}\nRef 2: ${formData.reference2}\nRef 3: ${formData.reference3}`,
-        possui_experiencia: 'Sim',
-        status_candidatura: 'Em análise',
-        ultima_atualizacao: new Date().toISOString().split('T')[0]
+        coren: formData.coren || '',
+        experiencia: formData.experience
       };
 
       const { data: candidateResult, error: candidateError } = await supabase
@@ -221,11 +228,13 @@ export default function CadastrarCuidador() {
       }
 
       console.log("Dados do candidato atualizados com sucesso:", candidateResult);
-      localStorage.removeItem('fallback_user');
       
-      toast.success("Cadastro de cuidador realizado com sucesso! Seus dados foram enviados para análise.");
-      form.reset();
-      setCurrentStep(1);
+      toast.success("Cadastro realizado com sucesso!");
+      
+      // Redirecionar para página de obrigado
+      setTimeout(() => {
+        window.location.href = "/obrigado";
+      }, 1500);
 
     } catch (error) {
       toast.error("Ocorreu um erro ao enviar o formulário. Verifique sua conexão.");
