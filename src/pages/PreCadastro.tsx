@@ -58,20 +58,31 @@ export default function PreCadastro() {
       const generatedPassword = generateSecurePassword();
       console.log("Senha gerada:", generatedPassword);
 
-      // First, create the caregiver record
-      const { data: caregiverData, error: caregiverError } = await supabase
-        .from('caregivers')
+      // Create the caregiver candidate record in candidatos_cuidadores_rows
+      const { data: candidateData, error: candidateError } = await supabase
+        .from('candidatos_cuidadores_rows')
         .insert({
-          name: data.name,
+          nome: data.name,
           email: data.email.toLowerCase().trim(),
-          status: 'pre_registered'
+          telefone: '', // Will be filled in the complete form
+          data_nascimento: '', // Will be filled in the complete form
+          fumante: 'Não', // Default value
+          escolaridade: '', // Will be filled in the complete form
+          possui_experiencia: 'Não', // Default value
+          disponivel_dormir_local: 'Não', // Default value
+          status_candidatura: 'Em análise',
+          cidade: '', // Will be filled in the complete form
+          endereco: '', // Will be filled in the complete form
+          cep: '', // Will be filled in the complete form
+          possui_filhos: false, // Default value
+          data_cadastro: new Date().toISOString().split('T')[0]
         })
         .select()
         .single();
 
-      if (caregiverError) {
-        console.error("Erro ao criar registro do cuidador:", caregiverError);
-        if (caregiverError.code === '23505') {
+      if (candidateError) {
+        console.error("Erro ao criar registro do candidato:", candidateError);
+        if (candidateError.code === '23505') {
           toast.error("Este email já está cadastrado no sistema.");
         } else {
           toast.error("Erro ao criar pré-cadastro. Tente novamente.");
@@ -79,47 +90,15 @@ export default function PreCadastro() {
         return;
       }
 
-      console.log("Cuidador criado:", caregiverData);
+      console.log("Candidato criado:", candidateData);
 
       // Store fallback user data in localStorage for immediate access
       localStorage.setItem('fallback_user', JSON.stringify({
-        id: caregiverData.id,
+        id: candidateData.id,
         name: data.name,
         email: data.email,
         password: generatedPassword
       }));
-
-      // Try to create Supabase Auth user
-      try {
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: data.email.toLowerCase().trim(),
-          password: generatedPassword,
-          options: {
-            data: {
-              first_name: data.name.split(' ')[0],
-              last_name: data.name.split(' ').slice(1).join(' ') || '',
-            }
-          }
-        });
-
-        if (authError) {
-          console.error("Erro na criação de usuário Supabase:", authError);
-          // Continue with fallback method - don't block the process
-        } else {
-          console.log("Usuário Supabase criado:", authData);
-          
-          // Update caregiver record with user_id if auth was successful
-          if (authData.user) {
-            await supabase
-              .from('caregivers')
-              .update({ user_id: authData.user.id })
-              .eq('id', caregiverData.id);
-          }
-        }
-      } catch (authError) {
-        console.error("Erro no processo de autenticação:", authError);
-        // Continue with fallback method
-      }
 
       toast.success(`Pré-cadastro realizado com sucesso! Uma senha foi gerada: ${generatedPassword}. Você será redirecionado para completar seu cadastro.`);
       

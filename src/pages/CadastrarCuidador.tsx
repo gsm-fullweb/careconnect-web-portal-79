@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card } from "@/components/ui/card";
@@ -172,112 +171,57 @@ export default function CadastrarCuidador() {
   };
 
   const onSubmit = async (formData: FormSchemaType) => {
-    let userId = null;
-    let isUpdate = false;
-    let caregiverId = null;
+    let candidateId = null;
 
-    if (user) {
-      userId = user.id;
-    } else {
-      const fallbackUser = localStorage.getItem('fallback_user');
-      if (!fallbackUser) {
-        toast.error("Você precisa estar logado para submeter o formulário.");
-        return;
-      }
-      const fallbackData = JSON.parse(fallbackUser);
-      caregiverId = fallbackData.id;
-      isUpdate = true;
+    const fallbackUser = localStorage.getItem('fallback_user');
+    if (!fallbackUser) {
+      toast.error("Você precisa estar logado para submeter o formulário.");
+      return;
     }
+    const fallbackData = JSON.parse(fallbackUser);
+    candidateId = fallbackData.id;
 
     setIsSubmitting(true);
     console.log("Dados do formulário:", formData);
 
     try {
-      if (isUpdate) {
-        const updateData = {
-          name: formData.name,
-          email: formData.email.toLowerCase().trim(),
-          whatsapp: formData.whatsapp,
-          birth_date: formData.birthDate,
-          has_children: formData.hasChildren,
-          smoker: formData.smoker,
-          cep: formData.cep,
-          address: formData.address,
-          state: formData.state,
-          city: formData.city,
-          education: formData.education,
-          courses: formData.courses,
-          availability: formData.availability,
-          sleep_at_client: formData.sleepAtClient,
-          care_category: formData.careCategory,
-          experience: formData.experience,
-          reference1: formData.reference1,
-          reference2: formData.reference2,
-          reference3: formData.reference3,
-          coren: formData.coren,
-          crefito: formData.crefito,
-          crm: formData.crm,
-          status: 'pending'
-        };
+      const updateData = {
+        nome: formData.name,
+        email: formData.email.toLowerCase().trim(),
+        telefone: formData.whatsapp,
+        data_nascimento: formData.birthDate,
+        possui_filhos: formData.hasChildren,
+        fumante: formData.smoker ? 'Sim' : 'Não',
+        cep: formData.cep,
+        endereco: formData.address,
+        cidade: formData.city,
+        escolaridade: formData.education,
+        cursos: formData.courses || '',
+        disponibilidade_horarios: formData.availability,
+        disponivel_dormir_local: formData.sleepAtClient ? 'Sim' : 'Não',
+        cargo: formData.careCategory,
+        descricao_experiencia: formData.experience,
+        referencias: `Ref 1: ${formData.reference1}\nRef 2: ${formData.reference2}\nRef 3: ${formData.reference3}`,
+        possui_experiencia: 'Sim',
+        status_candidatura: 'Em análise',
+        ultima_atualizacao: new Date().toISOString().split('T')[0]
+      };
 
-        const { data: caregiverResult, error: caregiverError } = await supabase
-          .from('caregivers')
-          .update(updateData)
-          .eq('id', caregiverId)
-          .select()
-          .single();
+      const { data: candidateResult, error: candidateError } = await supabase
+        .from('candidatos_cuidadores_rows')
+        .update(updateData)
+        .eq('id', candidateId)
+        .select()
+        .single();
 
-        if (caregiverError) {
-          console.error("Erro ao atualizar dados do cuidador:", caregiverError);
-          toast.error("Erro ao salvar dados do cuidador.");
-          return;
-        }
-
-        console.log("Dados do cuidador atualizados com sucesso:", caregiverResult);
-        localStorage.removeItem('fallback_user');
-        
-      } else {
-        const caregiverData = {
-          user_id: userId,
-          name: formData.name,
-          email: formData.email.toLowerCase().trim(),
-          whatsapp: formData.whatsapp,
-          birth_date: formData.birthDate,
-          has_children: formData.hasChildren,
-          smoker: formData.smoker,
-          cep: formData.cep,
-          address: formData.address,
-          state: formData.state,
-          city: formData.city,
-          education: formData.education,
-          courses: formData.courses,
-          availability: formData.availability,
-          sleep_at_client: formData.sleepAtClient,
-          care_category: formData.careCategory,
-          experience: formData.experience,
-          reference1: formData.reference1,
-          reference2: formData.reference2,
-          reference3: formData.reference3,
-          coren: formData.coren,
-          crefito: formData.crefito,
-          crm: formData.crm,
-          status: 'pending'
-        };
-
-        const { data: caregiverResult, error: caregiverError } = await supabase
-          .from('caregivers')
-          .insert(caregiverData)
-          .select()
-          .single();
-
-        if (caregiverError) {
-          console.error("Erro ao salvar dados do cuidador:", caregiverError);
-          toast.error("Erro ao salvar dados do cuidador. Verifique se você não já possui um cadastro.");
-          return;
-        }
-
-        console.log("Dados do cuidador salvos com sucesso:", caregiverResult);
+      if (candidateError) {
+        console.error("Erro ao atualizar dados do candidato:", candidateError);
+        toast.error("Erro ao salvar dados do candidato.");
+        return;
       }
+
+      console.log("Dados do candidato atualizados com sucesso:", candidateResult);
+      localStorage.removeItem('fallback_user');
       
       toast.success("Cadastro de cuidador realizado com sucesso! Seus dados foram enviados para análise.");
       form.reset();
