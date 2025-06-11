@@ -25,6 +25,11 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Email inválido.",
   }),
+  whatsapp: z.string().min(10, {
+    message: "WhatsApp deve ter pelo menos 10 dígitos.",
+  }).regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$|^\d{10,11}$/, {
+    message: "WhatsApp deve estar no formato (11) 99999-9999 ou apenas números.",
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -37,6 +42,7 @@ export default function PreCadastro() {
     defaultValues: {
       name: "",
       email: "",
+      whatsapp: "",
     },
   });
 
@@ -63,6 +69,7 @@ export default function PreCadastro() {
         body: JSON.stringify({
           name: data.name,
           email: data.email,
+          whatsapp: data.whatsapp,
           timestamp: new Date().toISOString(),
           source: "pre-cadastro-cuidador",
         }),
@@ -94,7 +101,7 @@ export default function PreCadastro() {
         .insert({
           nome: data.name,
           email: data.email.toLowerCase().trim(),
-          telefone: '', // Will be filled in the complete form
+          telefone: data.whatsapp, // Salvar WhatsApp no campo telefone
           data_nascimento: '', // Will be filled in the complete form
           fumante: 'Não', // Default value
           escolaridade: '', // Will be filled in the complete form
@@ -127,6 +134,7 @@ export default function PreCadastro() {
         id: candidateData.id,
         name: data.name,
         email: data.email,
+        whatsapp: data.whatsapp,
         password: generatedPassword
       }));
 
@@ -196,6 +204,30 @@ export default function PreCadastro() {
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="whatsapp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>WhatsApp</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="(11) 99999-9999" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-sm text-green-800">
+                      <strong>📱 WhatsApp:</strong> As informações para concluir seu cadastro 
+                      e suas credenciais de acesso serão enviadas no WhatsApp informado acima.
+                    </p>
+                  </div>
+
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-sm text-blue-800">
                       <strong>📧 Próximo passo:</strong> Após confirmar seus dados básicos, 
@@ -217,7 +249,7 @@ export default function PreCadastro() {
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
                   Após confirmar seus dados, você preencherá suas informações 
-                  profissionais e receberá suas credenciais de acesso.
+                  profissionais e receberá suas credenciais de acesso via WhatsApp.
                 </p>
               </div>
             </CardContent>
