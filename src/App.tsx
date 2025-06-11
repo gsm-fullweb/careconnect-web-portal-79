@@ -19,6 +19,8 @@ import PreCadastro from "./pages/PreCadastro";
 import CadastrarCuidador from "./pages/CadastrarCuidador";
 import Obrigado from "./pages/Obrigado";
 import PainelCuidador from "./pages/PainelCuidador";
+import ClienteDashboard from "./pages/ClienteDashboard";
+import DashboardRedirect from "./pages/DashboardRedirect";
 
 // Admin Pages
 import Login from "./pages/admin/Login";
@@ -53,7 +55,19 @@ const App = () => (
             <Route path="/pre-cadastro" element={<PreCadastro />} />
             <Route path="/cadastrar-cuidador" element={<CadastrarCuidador />} />
             <Route path="/obrigado" element={<Obrigado />} />
-            <Route path="/painel-cuidador" element={<PainelCuidador />} />
+            
+            {/* Dashboard Routes */}
+            <Route path="/dashboard" element={<DashboardRedirect />} />
+            <Route path="/painel-cuidador" element={
+              <ProtectedRoute>
+                <PainelCuidador />
+              </ProtectedRoute>
+            } />
+            <Route path="/cliente-dashboard" element={
+              <ProtectedRoute>
+                <ClienteDashboard />
+              </ProtectedRoute>
+            } />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<Login />} />
