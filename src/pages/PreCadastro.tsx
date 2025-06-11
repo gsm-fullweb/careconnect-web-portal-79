@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
+import { useNavigate } from "react-router-dom";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -30,12 +31,22 @@ const formSchema = z.object({
   }).regex(/^\(\d{2}\)\s\d{4,5}-\d{4}$|^\d{10,11}$/, {
     message: "WhatsApp deve estar no formato (11) 99999-9999 ou apenas números.",
   }),
+  password: z.string().min(6, {
+    message: "Senha deve ter pelo menos 6 caracteres.",
+  }),
+  confirmPassword: z.string().min(6, {
+    message: "Confirmação de senha deve ter pelo menos 6 caracteres.",
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Senhas não coincidem.",
+  path: ["confirmPassword"],
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 export default function PreCadastro() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -43,24 +54,16 @@ export default function PreCadastro() {
       name: "",
       email: "",
       whatsapp: "",
+      password: "",
+      confirmPassword: "",
     },
   });
-
-  const generateSecurePassword = () => {
-    const length = 12;
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-    let password = "";
-    for (let i = 0; i < length; i++) {
-      password += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    return password;
-  };
 
   const sendToWebhook = async (data: FormData) => {
     try {
       console.log("Enviando dados para webhook:", data);
       
-      const response = await fetch("https://n8n-n8n.n1n956.easypanel.host/webhook/sdr-youtube", {
+      await fetch("https://n8n-n8n.n1n956.easypanel.host/webhook/sdr-youtube", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,7 +74,7 @@ export default function PreCadastro() {
           email: data.email,
           whatsapp: data.whatsapp,
           timestamp: new Date().toISOString(),
-          source: "pre-cadastro-cuidador",
+          source: "cadastro-cuidador-acesso",
         }),
       });
 
@@ -79,39 +82,59 @@ export default function PreCadastro() {
       return true;
     } catch (error) {
       console.error("Erro ao enviar para webhook:", error);
-      // Não interrompe o fluxo mesmo se o webhook falhar
       return false;
     }
   };
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
-    console.log("Iniciando pré-cadastro para:", data.email);
+    console.log("Iniciando cadastro de acesso para:", data.email);
 
     try {
       // Primeiro, enviar para o webhook
       await sendToWebhook(data);
 
-      const generatedPassword = generateSecurePassword();
-      console.log("Senha gerada:", generatedPassword);
+      // Criar usuário no Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email.toLowerCase().trim(),
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            whatsapp: data.whatsapp,
+          }
+        }
+      });
 
-      // Create the caregiver candidate record in candidatos_cuidadores_rows
+      if (authError) {
+        console.error("Erro ao criar usuário:", authError);
+        if (authError.message.includes('already registered')) {
+          toast.error("Este email já está cadastrado no sistema.");
+        } else {
+          toast.error("Erro ao criar conta. Tente novamente.");
+        }
+        return;
+      }
+
+      console.log("Usuário criado no auth:", authData);
+
+      // Criar registro na tabela de candidatos
       const { data: candidateData, error: candidateError } = await supabase
         .from('candidatos_cuidadores_rows')
         .insert({
           nome: data.name,
           email: data.email.toLowerCase().trim(),
-          telefone: data.whatsapp, // Salvar WhatsApp no campo telefone
-          data_nascimento: '', // Will be filled in the complete form
-          fumante: 'Não', // Default value
-          escolaridade: '', // Will be filled in the complete form
-          possui_experiencia: 'Não', // Default value
-          disponivel_dormir_local: 'Não', // Default value
+          telefone: data.whatsapp,
+          data_nascimento: '', // Será preenchido posteriormente
+          fumante: 'Não',
+          escolaridade: '',
+          possui_experiencia: 'Não',
+          disponivel_dormir_local: 'Não',
           status_candidatura: 'Em análise',
-          cidade: '', // Will be filled in the complete form
-          endereco: '', // Will be filled in the complete form
-          cep: '', // Will be filled in the complete form
-          possui_filhos: false, // Default value
+          cidade: '',
+          endereco: '',
+          cep: '',
+          possui_filhos: false,
           data_cadastro: new Date().toISOString().split('T')[0]
         })
         .select()
@@ -120,34 +143,25 @@ export default function PreCadastro() {
       if (candidateError) {
         console.error("Erro ao criar registro do candidato:", candidateError);
         if (candidateError.code === '23505') {
-          toast.error("Este email já está cadastrado no sistema.");
+          toast.error("Já existe um cadastro com este email.");
         } else {
-          toast.error("Erro ao criar pré-cadastro. Tente novamente.");
+          toast.error("Erro ao criar registro. Tente novamente.");
         }
         return;
       }
 
       console.log("Candidato criado:", candidateData);
 
-      // Store fallback user data in localStorage for immediate access
-      localStorage.setItem('fallback_user', JSON.stringify({
-        id: candidateData.id,
-        name: data.name,
-        email: data.email,
-        whatsapp: data.whatsapp,
-        password: generatedPassword
-      }));
-
-      toast.success("Pré-cadastro realizado com sucesso! Redirecionando para o formulário completo...");
+      toast.success("Cadastro realizado com sucesso! Verifique seu email para confirmar a conta.");
       
-      // Redirect to complete registration form after 2 seconds
+      // Redirecionar para login após 3 segundos
       setTimeout(() => {
-        window.location.href = "/cadastrar-cuidador";
-      }, 2000);
+        navigate("/admin/login");
+      }, 3000);
 
     } catch (error) {
-      console.error("Erro no pré-cadastro:", error);
-      toast.error("Erro ao processar pré-cadastro. Tente novamente.");
+      console.error("Erro no cadastro:", error);
+      toast.error("Erro ao processar cadastro. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -160,10 +174,10 @@ export default function PreCadastro() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold">
-                Pré-Cadastro de Cuidador
+                Cadastro de Acesso - Cuidador
               </CardTitle>
               <p className="text-gray-600">
-                Insira seus dados básicos para começar seu cadastro
+                Crie sua conta para acessar a área do cuidador
               </p>
             </CardHeader>
             <CardContent>
@@ -221,18 +235,54 @@ export default function PreCadastro() {
                     )}
                   />
 
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Digite uma senha segura" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar Senha</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Repita a senha" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                     <p className="text-sm text-green-800">
-                      <strong>📱 WhatsApp:</strong> As informações para concluir seu cadastro 
-                      e suas credenciais de acesso serão enviadas no WhatsApp informado acima.
+                      <strong>📱 WhatsApp:</strong> Você receberá informações importantes 
+                      sobre sua candidatura no WhatsApp informado.
                     </p>
                   </div>
 
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>📧 Próximo passo:</strong> Após confirmar seus dados básicos, 
-                      você será redirecionado para preencher o formulário completo com suas 
-                      informações profissionais.
+                      <strong>🔐 Acesso:</strong> Após criar sua conta, você poderá 
+                      fazer login e acessar sua área do cuidador para completar 
+                      suas informações profissionais.
                     </p>
                   </div>
 
@@ -241,15 +291,17 @@ export default function PreCadastro() {
                     className="w-full bg-primary hover:bg-primary/90"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Processando..." : "Continuar Cadastro"}
+                    {isSubmitting ? "Criando Conta..." : "Criar Conta de Acesso"}
                   </Button>
                 </form>
               </Form>
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                  Após confirmar seus dados, você preencherá suas informações 
-                  profissionais e receberá suas credenciais de acesso via WhatsApp.
+                  Já possui uma conta?{" "}
+                  <a href="/admin/login" className="text-primary hover:underline">
+                    Faça login aqui
+                  </a>
                 </p>
               </div>
             </CardContent>
