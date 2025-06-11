@@ -50,11 +50,41 @@ export default function PreCadastro() {
     return password;
   };
 
+  const sendToWebhook = async (data: FormData) => {
+    try {
+      console.log("Enviando dados para webhook:", data);
+      
+      const response = await fetch("https://n8n-n8n.n1n956.easypanel.host/webhook/sdr-youtube", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        mode: "no-cors",
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          timestamp: new Date().toISOString(),
+          source: "pre-cadastro-cuidador",
+        }),
+      });
+
+      console.log("Dados enviados para webhook com sucesso");
+      return true;
+    } catch (error) {
+      console.error("Erro ao enviar para webhook:", error);
+      // Não interrompe o fluxo mesmo se o webhook falhar
+      return false;
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     console.log("Iniciando pré-cadastro para:", data.email);
 
     try {
+      // Primeiro, enviar para o webhook
+      await sendToWebhook(data);
+
       const generatedPassword = generateSecurePassword();
       console.log("Senha gerada:", generatedPassword);
 
@@ -100,12 +130,12 @@ export default function PreCadastro() {
         password: generatedPassword
       }));
 
-      toast.success(`Pré-cadastro realizado com sucesso! Uma senha foi gerada: ${generatedPassword}. Você será redirecionado para completar seu cadastro.`);
+      toast.success("Pré-cadastro realizado com sucesso! Redirecionando para o formulário completo...");
       
-      // Redirect to complete registration form after 3 seconds
+      // Redirect to complete registration form after 2 seconds
       setTimeout(() => {
         window.location.href = "/cadastrar-cuidador";
-      }, 3000);
+      }, 2000);
 
     } catch (error) {
       console.error("Erro no pré-cadastro:", error);
@@ -168,8 +198,9 @@ export default function PreCadastro() {
 
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>📧 Importante:</strong> Uma senha segura será gerada automaticamente 
-                      e exibida na tela após o cadastro. Anote-a para futuras consultas!
+                      <strong>📧 Próximo passo:</strong> Após confirmar seus dados básicos, 
+                      você será redirecionado para preencher o formulário completo com suas 
+                      informações profissionais.
                     </p>
                   </div>
 
@@ -178,15 +209,15 @@ export default function PreCadastro() {
                     className="w-full bg-primary hover:bg-primary/90"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Processando..." : "Criar Pré-Cadastro"}
+                    {isSubmitting ? "Processando..." : "Continuar Cadastro"}
                   </Button>
                 </form>
               </Form>
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-gray-600">
-                  Após o pré-cadastro, você será direcionado para o formulário completo 
-                  onde poderá preencher todas suas informações profissionais.
+                  Após confirmar seus dados, você preencherá suas informações 
+                  profissionais e receberá suas credenciais de acesso.
                 </p>
               </div>
             </CardContent>
