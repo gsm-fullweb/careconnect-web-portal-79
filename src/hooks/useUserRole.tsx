@@ -27,9 +27,12 @@ export const useUserRole = (): UserRoleData => {
       }
 
       try {
+        console.log('Checking role for user:', user.email);
+        
         // Check if user is admin (hardcoded emails or specific table)
         const adminEmails = ['admin@careconnect.com', 'admin@admin.com'];
         if (adminEmails.includes(user.email || '')) {
+          console.log('User identified as admin');
           setRole('admin');
           setUserData({ email: user.email, name: 'Admin' });
           setLoading(false);
@@ -43,7 +46,10 @@ export const useUserRole = (): UserRoleData => {
           .eq('email', user.email)
           .single();
 
+        console.log('Caregiver check result:', { caregiverData, caregiverError });
+
         if (caregiverData && !caregiverError) {
+          console.log('User identified as cuidador');
           setRole('cuidador');
           setUserData(caregiverData);
           setLoading(false);
@@ -51,6 +57,7 @@ export const useUserRole = (): UserRoleData => {
         }
 
         // If not admin or caregiver, assume client
+        console.log('User identified as cliente (default)');
         setRole('cliente');
         setUserData({ email: user.email, name: user.email });
         setLoading(false);
@@ -63,6 +70,8 @@ export const useUserRole = (): UserRoleData => {
 
     checkUserRole();
   }, [user]);
+
+  console.log('Current role state:', { role, loading, userEmail: user?.email });
 
   return { role, userData, loading };
 };
