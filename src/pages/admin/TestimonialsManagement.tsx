@@ -72,43 +72,29 @@ const TestimonialsManagement = () => {
     }
   });
 
-  // Buscar clientes - usando a tabela profiles com log detalhado
+  // Buscar clientes - buscar todos os profiles como potenciais clientes
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
-      console.log('Buscando clientes...');
+      console.log('Buscando todos os profiles como clientes...');
       
-      // Primeiro, vamos ver quais dados existem na tabela profiles
-      const { data: allProfiles, error: allError } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      console.log('Todos os profiles encontrados:', allProfiles);
-      console.log('Erro na busca geral:', allError);
-      
-      // Agora vamos tentar buscar apenas clientes
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, user_role')
-        .eq('user_role', 'cliente');
+        .select('id, email, first_name, last_name, user_role');
       
       if (error) {
-        console.error('Erro ao buscar clientes:', error);
-        // Se der erro, vamos tentar buscar todos os profiles
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('profiles')
-          .select('id, email, first_name, last_name');
-        
-        if (fallbackError) {
-          console.error('Erro na busca fallback:', fallbackError);
-          return [];
-        }
-        console.log('Usando dados fallback como clientes:', fallbackData);
-        return fallbackData as Client[];
+        console.error('Erro ao buscar profiles:', error);
+        return [];
       }
       
-      console.log('Clientes específicos encontrados:', data);
-      return data as Client[];
+      console.log('Profiles encontrados para clientes:', data);
+      
+      // Filtrar apenas profiles que não são admin, ou se não houver nenhum, incluir todos
+      const nonAdminProfiles = data.filter(profile => profile.user_role !== 'admin');
+      const clientsToReturn = nonAdminProfiles.length > 0 ? nonAdminProfiles : data;
+      
+      console.log('Clientes finais:', clientsToReturn);
+      return clientsToReturn as Client[];
     }
   });
 
