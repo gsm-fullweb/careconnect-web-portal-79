@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,7 +98,7 @@ const TestimonialsManagement = () => {
       console.log('Buscando cuidadores...');
       const { data, error } = await supabase
         .from('candidatos_cuidadores_rows')
-        .select('id, nome as name, email');
+        .select('id, nome, email');
       
       if (error) {
         console.error('Erro ao buscar cuidadores:', error);
@@ -111,7 +110,11 @@ const TestimonialsManagement = () => {
         throw error;
       }
       console.log('Cuidadores encontrados:', data);
-      return data as Caregiver[];
+      // Mapear nome para name para manter compatibilidade com a interface
+      return data.map(caregiver => ({
+        ...caregiver,
+        name: caregiver.nome
+      })) as Caregiver[];
     }
   });
 
