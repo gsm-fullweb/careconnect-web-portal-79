@@ -58,39 +58,59 @@ const TestimonialsManagement = () => {
   const { data: testimonials = [], isLoading } = useQuery({
     queryKey: ['testimonials'],
     queryFn: async () => {
+      console.log('Buscando depoimentos...');
       const { data, error } = await supabase
         .from('testimonials')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar depoimentos:', error);
+        throw error;
+      }
+      console.log('Depoimentos encontrados:', data);
       return data as Testimonial[];
     }
   });
 
-  // Buscar clientes
+  // Buscar clientes - usando a tabela profiles
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
+      console.log('Buscando clientes...');
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email, first_name, last_name')
         .eq('user_role', 'cliente');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar clientes:', error);
+        throw error;
+      }
+      console.log('Clientes encontrados:', data);
       return data as Client[];
     }
   });
 
-  // Buscar cuidadores
+  // Buscar cuidadores - usando a tabela candidatos_cuidadores_rows
   const { data: caregivers = [] } = useQuery({
     queryKey: ['caregivers'],
     queryFn: async () => {
+      console.log('Buscando cuidadores...');
       const { data, error } = await supabase
-        .from('caregivers')
-        .select('id, name, email');
+        .from('candidatos_cuidadores_rows')
+        .select('id, nome as name, email');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar cuidadores:', error);
+        // Se a tabela não existir, retornamos array vazio
+        if (error.code === '42P01') {
+          console.log('Tabela candidatos_cuidadores_rows não existe, retornando array vazio');
+          return [];
+        }
+        throw error;
+      }
+      console.log('Cuidadores encontrados:', data);
       return data as Caregiver[];
     }
   });
