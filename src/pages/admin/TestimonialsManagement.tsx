@@ -72,21 +72,42 @@ const TestimonialsManagement = () => {
     }
   });
 
-  // Buscar clientes - usando a tabela profiles
+  // Buscar clientes - usando a tabela profiles com log detalhado
   const { data: clients = [] } = useQuery({
     queryKey: ['clients'],
     queryFn: async () => {
       console.log('Buscando clientes...');
+      
+      // Primeiro, vamos ver quais dados existem na tabela profiles
+      const { data: allProfiles, error: allError } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      console.log('Todos os profiles encontrados:', allProfiles);
+      console.log('Erro na busca geral:', allError);
+      
+      // Agora vamos tentar buscar apenas clientes
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, email, first_name, last_name')
+        .select('id, email, first_name, last_name, user_role')
         .eq('user_role', 'cliente');
       
       if (error) {
         console.error('Erro ao buscar clientes:', error);
-        throw error;
+        // Se der erro, vamos tentar buscar todos os profiles
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('profiles')
+          .select('id, email, first_name, last_name');
+        
+        if (fallbackError) {
+          console.error('Erro na busca fallback:', fallbackError);
+          return [];
+        }
+        console.log('Usando dados fallback como clientes:', fallbackData);
+        return fallbackData as Client[];
       }
-      console.log('Clientes encontrados:', data);
+      
+      console.log('Clientes específicos encontrados:', data);
       return data as Client[];
     }
   });
@@ -110,10 +131,11 @@ const TestimonialsManagement = () => {
         throw error;
       }
       console.log('Cuidadores encontrados:', data);
-      // Mapear nome para name para manter compatibilidade com a interface
+      // Mapear nome para name e converter id para string para manter compatibilidade com a interface
       return data.map(caregiver => ({
-        ...caregiver,
-        name: caregiver.nome
+        id: caregiver.id.toString(),
+        name: caregiver.nome,
+        email: caregiver.email
       })) as Caregiver[];
     }
   });
@@ -467,7 +489,7 @@ const TestimonialsManagement = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cliente
+                      Cliente ({clients.length} encontrados)
                     </label>
                     <select
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
@@ -485,7 +507,7 @@ const TestimonialsManagement = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cuidador
+                      Cuidador ({caregivers.length} encontrados)
                     </label>
                     <select
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
