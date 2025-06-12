@@ -50,17 +50,17 @@ export const useUserRole = (): UserRoleData => {
 
         if (profileData && !profileError) {
           console.log('User found in profiles table:', profileData);
-          if (profileData.role === 'admin') {
+          if (profileData.user_role === 'admin') {
             setRole('admin');
             setUserData(profileData);
             setLoading(false);
             return;
-          } else if (profileData.role === 'cuidador') {
+          } else if (profileData.user_role === 'cuidador') {
             setRole('cuidador');
             setUserData(profileData);
             setLoading(false);
             return;
-          } else if (profileData.role === 'cliente') {
+          } else if (profileData.user_role === 'cliente') {
             setRole('cliente');
             setUserData(profileData);
             setLoading(false);
