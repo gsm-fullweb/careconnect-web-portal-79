@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 // Schema do formulário
 const formSchema = z.object({
@@ -87,6 +88,7 @@ type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function CadastrarCuidador() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [candidateData, setCandidateData] = useState<any>(null);
@@ -262,6 +264,10 @@ export default function CadastrarCuidador() {
   };
 
   const onSubmit = async (formData: FormSchemaType) => {
+    console.log("Iniciando submissão do formulário...");
+    console.log("Dados do formulário:", formData);
+    console.log("Dados do candidato:", candidateData);
+    
     let candidateId = candidateData?.id;
     
     // If no candidate data from database, try fallback user
@@ -269,15 +275,15 @@ export default function CadastrarCuidador() {
       const fallbackUser = localStorage.getItem('fallback_user');
       if (!fallbackUser) {
         toast.error("Erro: dados de pré-cadastro não encontrados. Refaça o pré-cadastro.");
-        window.location.href = "/pre-cadastro";
+        navigate("/pre-cadastro");
         return;
       }
       const fallbackData = JSON.parse(fallbackUser);
       candidateId = fallbackData.id;
     }
 
+    console.log("ID do candidato para atualização:", candidateId);
     setIsSubmitting(true);
-    console.log("Dados do formulário:", formData);
 
     try {
       // Atualizar o registro existente na tabela candidatos_cuidadores_rows
@@ -303,8 +309,12 @@ export default function CadastrarCuidador() {
         cargo: formData.careCategory,
         coren: formData.coren || '',
         experiencia: formData.experience,
-        declaracao: formData.declaracao ? 'Aceito' : 'Não aceito'
+        declaracao: formData.declaracao ? 'Aceito' : 'Não aceito',
+        crefito: formData.crefito || '',
+        crm: formData.crm || ''
       };
+
+      console.log("Dados para atualização:", updateData);
 
       const { data: candidateResult, error: candidateError } = await supabase
         .from('candidatos_cuidadores_rows')
@@ -315,7 +325,7 @@ export default function CadastrarCuidador() {
 
       if (candidateError) {
         console.error("Erro ao atualizar dados do candidato:", candidateError);
-        toast.error("Erro ao salvar dados do candidato.");
+        toast.error("Erro ao salvar dados do candidato: " + candidateError.message);
         return;
       }
 
@@ -324,12 +334,12 @@ export default function CadastrarCuidador() {
       // Clear localStorage data after successful submission
       localStorage.removeItem('caregiver_data');
       
-      toast.success("Cadastro realizado com sucesso!");
+      toast.success("Cadastro realizado com sucesso! Você será redirecionado para o painel do cuidador.");
       
-      // Redirecionar para página de obrigado
+      // Redirecionar para painel do cuidador após sucesso
       setTimeout(() => {
-        window.location.href = "/obrigado";
-      }, 1500);
+        navigate("/painel-cuidador");
+      }, 2000);
 
     } catch (error) {
       toast.error("Ocorreu um erro ao enviar o formulário. Verifique sua conexão.");
