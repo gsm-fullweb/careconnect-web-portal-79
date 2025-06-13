@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -137,7 +138,20 @@ export default function CadastrarCuidador() {
   // Load and auto-fill candidate data
   useEffect(() => {
     const loadCandidateData = async () => {
-      if (!user?.email) return;
+      console.log("Carregando dados do candidato...");
+      console.log("User:", user);
+
+      if (!user?.email) {
+        console.log("Sem email do usuário, verificando fallback...");
+        const fallbackUser = localStorage.getItem('fallback_user');
+        if (fallbackUser) {
+          const fallbackData = JSON.parse(fallbackUser);
+          console.log("Dados do fallback user:", fallbackData);
+          setCandidateData(fallbackData);
+          return;
+        }
+        return;
+      }
 
       try {
         // First try to get data from localStorage (when coming from PainelCuidador)
@@ -150,6 +164,7 @@ export default function CadastrarCuidador() {
           console.log('Dados carregados do localStorage:', candidateInfo);
         } else {
           // Fallback: fetch from Supabase
+          console.log('Buscando dados no Supabase para email:', user.email);
           const { data, error } = await supabase
             .from('candidatos_cuidadores_rows')
             .select('*')
@@ -158,11 +173,16 @@ export default function CadastrarCuidador() {
 
           if (error) {
             console.error('Erro ao buscar dados do candidato:', error);
-            return;
+            // Try fallback user if Supabase fails
+            const fallbackUser = localStorage.getItem('fallback_user');
+            if (fallbackUser) {
+              candidateInfo = JSON.parse(fallbackUser);
+              console.log('Usando dados do fallback após erro no Supabase:', candidateInfo);
+            }
+          } else {
+            candidateInfo = data;
+            console.log('Dados carregados do Supabase:', candidateInfo);
           }
-          
-          candidateInfo = data;
-          console.log('Dados carregados do Supabase:', candidateInfo);
         }
         
         if (candidateInfo) {
@@ -192,6 +212,7 @@ export default function CadastrarCuidador() {
             coren: candidateInfo.coren || "",
             crefito: candidateInfo.crefito || "",
             crm: candidateInfo.crm || "",
+            declaracao: false,
           };
           
           // Parse references if they exist
@@ -212,7 +233,7 @@ export default function CadastrarCuidador() {
       }
     };
 
-    if (!loading && user) {
+    if (!loading) {
       loadCandidateData();
     }
   }, [user, loading, form]);
@@ -264,25 +285,54 @@ export default function CadastrarCuidador() {
   };
 
   const onSubmit = async (formData: FormSchemaType) => {
-    console.log("Iniciando submissão do formulário...");
+    console.log("=== INICIANDO SUBMISSÃO ===");
     console.log("Dados do formulário:", formData);
-    console.log("Dados do candidato:", candidateData);
+    console.log("Dados do candidato armazenados:", candidateData);
+    console.log("User atual:", user);
     
-    let candidateId = candidateData?.id;
+    let candidateId = null;
     
-    // If no candidate data from database, try fallback user
-    if (!candidateId) {
+    // Priority 1: Use candidateData.id if available
+    if (candidateData?.id) {
+      candidateId = candidateData.id;
+      console.log("Usando ID do candidateData:", candidateId);
+    } else {
+      // Priority 2: Try fallback user
       const fallbackUser = localStorage.getItem('fallback_user');
-      if (!fallbackUser) {
-        toast.error("Erro: dados de pré-cadastro não encontrados. Refaça o pré-cadastro.");
-        navigate("/pre-cadastro");
-        return;
+      if (fallbackUser) {
+        const fallbackData = JSON.parse(fallbackUser);
+        candidateId = fallbackData.id;
+        console.log("Usando ID do fallback user:", candidateId);
+      } else if (user?.email) {
+        // Priority 3: Try to find by email in database
+        console.log("Tentando buscar candidato por email:", user.email);
+        try {
+          const { data, error } = await supabase
+            .from('candidatos_cuidadores_rows')
+            .select('id')
+            .eq('email', user.email)
+            .single();
+          
+          if (data && !error) {
+            candidateId = data.id;
+            console.log("ID encontrado por email:", candidateId);
+          } else {
+            console.error("Erro ao buscar por email:", error);
+          }
+        } catch (err) {
+          console.error("Erro na busca por email:", err);
+        }
       }
-      const fallbackData = JSON.parse(fallbackUser);
-      candidateId = fallbackData.id;
     }
 
-    console.log("ID do candidato para atualização:", candidateId);
+    if (!candidateId) {
+      console.error("ERRO: ID do candidato não encontrado");
+      toast.error("Erro: dados de pré-cadastro não encontrados. Refaça o pré-cadastro.");
+      navigate("/pre-cadastro");
+      return;
+    }
+
+    console.log("ID final do candidato para atualização:", candidateId);
     setIsSubmitting(true);
 
     try {
@@ -304,7 +354,7 @@ export default function CadastrarCuidador() {
         endereco: formData.address,
         cep: formData.cep,
         possui_filhos: formData.hasChildren,
-        ultima_atualizacao: new Date().toISOString().split('T')[0],
+        ultima_atualizacao: new Date().toISOString(),
         status_candidatura: 'Cadastro completo - Em análise',
         cargo: formData.careCategory,
         coren: formData.coren || '',
@@ -315,6 +365,7 @@ export default function CadastrarCuidador() {
       };
 
       console.log("Dados para atualização:", updateData);
+      console.log("Tentando atualizar registro com ID:", candidateId);
 
       const { data: candidateResult, error: candidateError } = await supabase
         .from('candidatos_cuidadores_rows')
@@ -322,6 +373,9 @@ export default function CadastrarCuidador() {
         .eq('id', candidateId)
         .select()
         .single();
+
+      console.log("Resultado da atualização:", candidateResult);
+      console.log("Erro da atualização:", candidateError);
 
       if (candidateError) {
         console.error("Erro ao atualizar dados do candidato:", candidateError);
@@ -342,8 +396,8 @@ export default function CadastrarCuidador() {
       }, 2000);
 
     } catch (error) {
+      console.error("Erro de rede ou exceção:", error);
       toast.error("Ocorreu um erro ao enviar o formulário. Verifique sua conexão.");
-      console.error("Erro de rede:", error);
     } finally {
       setIsSubmitting(false);
     }
