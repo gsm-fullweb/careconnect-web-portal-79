@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -87,6 +86,7 @@ export default function CadastrarCuidador() {
   const { user, loading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [candidateData, setCandidateData] = useState<any>(null);
   const totalSteps = 4;
 
   // Verificar se o usuário está logado
@@ -127,6 +127,89 @@ export default function CadastrarCuidador() {
       crm: "",
     },
   });
+
+  // Load and auto-fill candidate data
+  useEffect(() => {
+    const loadCandidateData = async () => {
+      if (!user?.email) return;
+
+      try {
+        // First try to get data from localStorage (when coming from PainelCuidador)
+        const localStorageData = localStorage.getItem('caregiver_data');
+        
+        let candidateInfo = null;
+        
+        if (localStorageData) {
+          candidateInfo = JSON.parse(localStorageData);
+          console.log('Dados carregados do localStorage:', candidateInfo);
+        } else {
+          // Fallback: fetch from Supabase
+          const { data, error } = await supabase
+            .from('candidatos_cuidadores_rows')
+            .select('*')
+            .eq('email', user.email)
+            .single();
+
+          if (error) {
+            console.error('Erro ao buscar dados do candidato:', error);
+            return;
+          }
+          
+          candidateInfo = data;
+          console.log('Dados carregados do Supabase:', candidateInfo);
+        }
+        
+        if (candidateInfo) {
+          setCandidateData(candidateInfo);
+          
+          // Auto-fill form with existing data
+          const autoFillData = {
+            name: candidateInfo.nome || "",
+            email: candidateInfo.email || "",
+            whatsapp: candidateInfo.telefone || "",
+            birthDate: candidateInfo.data_nascimento || "",
+            hasChildren: candidateInfo.possui_filhos || false,
+            smoker: candidateInfo.fumante === 'Sim',
+            cep: candidateInfo.cep || "",
+            address: candidateInfo.endereco || "",
+            state: "", // Will need to be filled by user
+            city: candidateInfo.cidade || "",
+            education: candidateInfo.escolaridade || "",
+            courses: candidateInfo.cursos || "",
+            availability: candidateInfo.disponibilidade_horarios || "",
+            sleepAtClient: candidateInfo.disponivel_dormir_local === 'Sim',
+            careCategory: candidateInfo.cargo || "",
+            experience: candidateInfo.experiencia || candidateInfo.descricao_experiencia || "",
+            reference1: "",
+            reference2: "",
+            reference3: "",
+            coren: candidateInfo.coren || "",
+            crefito: candidateInfo.crefito || "",
+            crm: candidateInfo.crm || "",
+          };
+          
+          // Parse references if they exist
+          if (candidateInfo.referencias) {
+            const references = candidateInfo.referencias.split(' | ');
+            autoFillData.reference1 = references[0] || "";
+            autoFillData.reference2 = references[1] || "";
+            autoFillData.reference3 = references[2] || "";
+          }
+          
+          // Reset form with auto-filled data
+          form.reset(autoFillData);
+          
+          toast.success("Formulário preenchido automaticamente com seus dados!");
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados do candidato:', error);
+      }
+    };
+
+    if (!loading && user) {
+      loadCandidateData();
+    }
+  }, [user, loading, form]);
 
   // Formulário dividido em 4 etapas
   const formSteps = [
@@ -175,15 +258,19 @@ export default function CadastrarCuidador() {
   };
 
   const onSubmit = async (formData: FormSchemaType) => {
-    const fallbackUser = localStorage.getItem('fallback_user');
-    if (!fallbackUser) {
-      toast.error("Erro: dados de pré-cadastro não encontrados. Refaça o pré-cadastro.");
-      window.location.href = "/pre-cadastro";
-      return;
+    let candidateId = candidateData?.id;
+    
+    // If no candidate data from database, try fallback user
+    if (!candidateId) {
+      const fallbackUser = localStorage.getItem('fallback_user');
+      if (!fallbackUser) {
+        toast.error("Erro: dados de pré-cadastro não encontrados. Refaça o pré-cadastro.");
+        window.location.href = "/pre-cadastro";
+        return;
+      }
+      const fallbackData = JSON.parse(fallbackUser);
+      candidateId = fallbackData.id;
     }
-
-    const fallbackData = JSON.parse(fallbackUser);
-    const candidateId = fallbackData.id;
 
     setIsSubmitting(true);
     console.log("Dados do formulário:", formData);
@@ -229,6 +316,9 @@ export default function CadastrarCuidador() {
 
       console.log("Dados do candidato atualizados com sucesso:", candidateResult);
       
+      // Clear localStorage data after successful submission
+      localStorage.removeItem('caregiver_data');
+      
       toast.success("Cadastro realizado com sucesso!");
       
       // Redirecionar para página de obrigado
@@ -255,6 +345,13 @@ export default function CadastrarCuidador() {
             <p className="text-lg text-gray-600">
               Preencha o formulário abaixo com seus dados e experiências
             </p>
+            {candidateData && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-800 text-sm">
+                  ✅ Formulário preenchido automaticamente com seus dados do pré-cadastro
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Progresso do formulário */}
