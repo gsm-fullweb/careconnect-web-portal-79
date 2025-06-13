@@ -78,6 +78,9 @@ const formSchema = z.object({
   coren: z.string().optional(),
   crefito: z.string().optional(),
   crm: z.string().optional(),
+  declaracao: z.boolean().refine(val => val === true, {
+    message: "Você deve aceitar o termo de compromisso.",
+  }),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -125,6 +128,7 @@ export default function CadastrarCuidador() {
       coren: "",
       crefito: "",
       crm: "",
+      declaracao: false,
     },
   });
 
@@ -230,8 +234,8 @@ export default function CadastrarCuidador() {
     },
     {
       id: 4,
-      title: "Experiência e Referências",
-      fields: ["experience", "reference1", "reference2", "reference3"],
+      title: "Experiência e Termo",
+      fields: ["experience", "reference1", "reference2", "reference3", "declaracao"],
     },
   ];
 
@@ -298,7 +302,8 @@ export default function CadastrarCuidador() {
         status_candidatura: 'Cadastro completo - Em análise',
         cargo: formData.careCategory,
         coren: formData.coren || '',
-        experiencia: formData.experience
+        experiencia: formData.experience,
+        declaracao: formData.declaracao ? 'Aceito' : 'Não aceito'
       };
 
       const { data: candidateResult, error: candidateError } = await supabase
@@ -714,7 +719,7 @@ export default function CadastrarCuidador() {
                   </>
                 )}
 
-                {/* Etapa 4: Experiência Profissional */}
+                {/* Etapa 4: Experiência Profissional e Termo */}
                 {currentStep === 4 && (
                   <>
                     <h2 className="text-xl font-bold mb-6">Experiência Profissional</h2>
@@ -776,6 +781,34 @@ export default function CadastrarCuidador() {
                           </FormItem>
                         )}
                       />
+                      
+                      {/* Termo de Compromisso */}
+                      <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-4 text-center">TERMO DE COMPROMISSO</h3>
+                        <p className="text-gray-700 mb-6 text-center">
+                          Declaro que as informações acima prestadas são verdadeiras, e assumo a inteira responsabilidade pelas mesmas.
+                        </p>
+                        <FormField
+                          control={form.control}
+                          name="declaracao"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-white">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="font-medium">
+                                  Li e concordo com o termo de compromisso acima
+                                </FormLabel>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </>
                 )}
