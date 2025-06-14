@@ -5,27 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Search, MessageSquare, User, Star, MapPin, Phone, LogOut } from "lucide-react";
+import { Search, MessageSquare, User, Star, MapPin, Phone, LogOut, Heart, Filter } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from 'react-router-dom';
 
-// ✅ Function: ClienteDashboard
-// 📌 Description: Main dashboard component for clients to search caregivers and submit testimonials
-// 📥 Parameters: none
-// 📤 Returns: JSX.Element - Complete client dashboard interface
 const ClienteDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Estados para busca de cuidadores
+  // Estados principais
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedAvailability, setSelectedAvailability] = useState("");
   const [cuidadoresEncontrados, setCuidadoresEncontrados] = useState([]);
   const [cuidadorSelecionado, setCuidadorSelecionado] = useState(null);
   const [buscaRealizada, setBuscaRealizada] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [favoritos, setFavoritos] = useState([]);
   
   // Estados para depoimentos
   const [novoDepoimento, setNovoDepoimento] = useState({
@@ -35,50 +34,41 @@ const ClienteDashboard = () => {
     avaliacao: 5
   });
   const [meusDepoimentos, setMeusDepoimentos] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingBusca, setLoadingBusca] = useState(false);
   
-  // ✅ Novos estados para dados dinâmicos
+  // Dados dinâmicos
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState([]);
-  const [categoriasDisponiveis, setCategoriasDisponiveis] = useState([]);
+  const [disponibilidadesDisponiveis, setDisponibilidadesDisponiveis] = useState([]);
 
-  // ✅ Function: loadCidadesECategorias
-  // 📌 Description: Loads available cities and categories from database
-  // 📥 Parameters: none
-  // 📤 Returns: Promise<void>
-  const loadCidadesECategorias = async () => {
+  // Carregar dados iniciais
+  useEffect(() => {
+    loadCidadesEDisponibilidades();
+    loadMeusDepoimentos();
+    loadFavoritos();
+  }, [user]);
+
+  const loadCidadesEDisponibilidades = async () => {
     try {
       const { data, error } = await supabase
         .from('candidatos_cuidadores_rows')
-        .select('cidade, cargo')
-        .eq('ativo', 'true')  // ✅ Mudança: true → 'true'
+        .select('cidade, disponibilidade_horarios')
+        .eq('ativo', 'true')
         .eq('status_candidatura', 'Aprovado');
       
       if (error) throw error;
       
-      // Extrair cidades únicas
-      const cidades = [...new Set(data?.map(item => item.cidade).filter(Boolean))];
+      // Extrair cidades únicas (removendo valores vazios e null)
+      const cidades = [...new Set(data?.map(item => item.cidade).filter(cidade => cidade && cidade.trim() !== ''))];
       setCidadesDisponiveis(cidades.sort());
       
-      // Extrair categorias únicas
-      const categorias = [...new Set(data?.map(item => item.cargo).filter(Boolean))];
-      setCategoriasDisponiveis(categorias.sort());
+      // Extrair disponibilidades únicas
+      const disponibilidades = [...new Set(data?.map(item => item.disponibilidade_horarios).filter(Boolean))];
+      setDisponibilidadesDisponiveis(disponibilidades.sort());
       
     } catch (error) {
-      console.error('Erro ao carregar cidades e categorias:', error);
+      console.error('Erro ao carregar dados:', error);
     }
   };
 
-  // ✅ Function: useEffect para carregar dados iniciais
-  useEffect(() => {
-    loadCidadesECategorias();
-    loadMeusDepoimentos();
-  }, [user]);
-
-  // ✅ Function: handleLogout
-  // 📌 Description: Handles user logout and redirects to home page
-  // 📥 Parameters: none
-  // 📤 Returns: Promise<void>
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -88,107 +78,56 @@ const ClienteDashboard = () => {
     }
   };
 
-  // ✅ Function: handleBuscarCuidadores
-  // 📌 Description: Searches for caregivers in the database based on filters
-  // 📥 Parameters: none
-  // 📤 Returns: Promise<void>
   const handleBuscarCuidadores = async () => {
     setLoading(true);
     setBuscaRealizada(true);
-    setLoadingBusca(true); // ✅ Adicionado: Inicia o estado de carregamento da busca
     
     try {
       let query = supabase
         .from('candidatos_cuidadores_rows')
-        .select('*');
+        .select('*')
+        .eq('ativo', 'true')
+        .eq('status_candidatura', 'Aprovado');
       
-      // ✅ Filtro 'ativo' simplificado para consistência com o banco de dados
-      query = query.eq('ativo', 'true');
-      
-      // ✅ Filtro 'status_candidatura' simplificado para o status exato 'Aprovado'
-      query = query.eq('status_candidatura', 'Aprovado');
-      
-      // Filtrar por nome se houver termo de busca
+      // Filtrar por nome/especialidade se houver termo de busca
       if (searchTerm && searchTerm.trim()) {
         const termo = searchTerm.trim().toLowerCase();
-        // ✅ Busca mais flexível - procura em qualquer parte do nome
-        query = query.or(`nome.ilike.%${termo}%,nome.ilike.%${termo.split(' ').reverse().join(' ')}%`);
+        query = query.or(`nome.ilike.%${termo}%,cargo.ilike.%${termo}%,descricao_experiencia.ilike.%${termo}%`);
       }
       
-      // Filtrar por localização se selecionada
+      // Filtrar por cidade se selecionada
       if (selectedLocation && selectedLocation !== '') {
-        query = query.ilike('cidade', `%${selectedLocation.trim()}%`);
+        query = query.eq('cidade', selectedLocation);
       }
       
-      // Filtrar por categoria se selecionada
-      if (selectedCategory && selectedCategory !== '') {
-        query = query.ilike('cargo', `%${selectedCategory}%`);
+      // Filtrar por disponibilidade se selecionada
+      if (selectedAvailability && selectedAvailability !== '') {
+        query = query.ilike('disponibilidade_horarios', `%${selectedAvailability}%`);
       }
       
-      console.log('🔍 Executando busca com filtros:', {
-        searchTerm,
-        selectedLocation,
-        selectedCategory
-      });
+      const { data, error } = await query.order('nome');
       
-      const { data, error } = await query;
+      if (error) throw error;
       
-      if (error) {
-        console.error('❌ Erro na busca:', error);
-        throw error;
-      }
-      
-      console.log('✅ Dados brutos encontrados:', data?.length || 0);
-      console.log('📋 Amostra dos dados:', data?.slice(0, 3));
-      
-      // ✅ Filtro adicional no frontend para maior flexibilidade
-      let dadosFiltrados = data || [];
-      
-      // Se há termo de busca, aplica filtro adicional no frontend
-      if (searchTerm && searchTerm.trim()) {
-        const termo = searchTerm.trim().toLowerCase();
-        dadosFiltrados = dadosFiltrados.filter(cuidador => {
-          const nome = (cuidador.nome || '').toLowerCase();
-          const nomeInvertido = nome.split(' ').reverse().join(' ');
-          return nome.includes(termo) || 
-                 nomeInvertido.includes(termo) ||
-                 termo.split(' ').some(palavra => nome.includes(palavra));
-        });
-      }
-      
-      console.log('✅ Dados após filtro frontend:', dadosFiltrados.length);
-      
-      // Mapear os dados para o formato esperado pelo componente
-      const cuidadoresFormatados = dadosFiltrados.map(cuidador => ({
+      // Mapear os dados para o formato da tabela
+      const cuidadoresFormatados = (data || []).map(cuidador => ({
         id: cuidador.id,
-        nome: cuidador.nome,
-        cidade: cuidador.cidade,
-        categoria: cuidador.cargo || 'geral',
+        nome: cuidador.nome || 'Nome não informado',
+        cidade: cuidador.cidade || 'Cidade não informada',
+        telefone: cuidador.telefone || 'Telefone não informado',
+        cargo: cuidador.cargo || 'Cuidador',
         experiencia: cuidador.experiencia || 'Não informado',
-        avaliacao: 5.0,
-        telefone: cuidador.telefone,
-        descricao: cuidador.descricao_experiencia || cuidador.descricao || 'Cuidador profissional',
         email: cuidador.email,
-        escolaridade: cuidador.escolaridade,
-        disponibilidade: cuidador.disponibilidade_horarios,
-        referencias: cuidador.referencias
+        disponibilidade: cuidador.disponibilidade_horarios || 'Não informado',
+        descricao: cuidador.descricao_experiencia || 'Profissional experiente'
       }));
       
       setCuidadoresEncontrados(cuidadoresFormatados);
       
-      if (cuidadoresFormatados.length === 0) {
-        toast({
-          title: "Nenhum cuidador encontrado",
-          description: "Tente ajustar os filtros de busca para encontrar mais resultados.",
-          variant: "default"
-        });
-      } else {
-        toast({
-          title: "Busca realizada",
-          description: `Encontrados ${cuidadoresFormatados.length} cuidador(es)`,
-          variant: "default"
-        });
-      }
+      toast({
+        title: "Busca realizada",
+        description: `Encontrados ${cuidadoresFormatados.length} cuidador(es)`,
+      });
       
     } catch (error) {
       console.error('Erro ao buscar cuidadores:', error);
@@ -197,17 +136,77 @@ const ClienteDashboard = () => {
         description: "Ocorreu um erro ao buscar cuidadores. Tente novamente.",
         variant: "destructive"
       });
-      setCuidadoresEncontrados([]);
     } finally {
       setLoading(false);
-      setLoadingBusca(false); // ✅ Adicionado: Finaliza o estado de carregamento da busca
     }
   };
 
-  // ✅ Function: handleSelecionarCuidador
-  // 📌 Description: Selects a caregiver for testimonial submission
-  // 📥 Parameters: cuidador (object) - caregiver data
-  // 📤 Returns: void
+  const handleWhatsApp = (telefone: string, nome: string) => {
+    if (!telefone || telefone === 'Telefone não informado') {
+      toast({
+        title: "Telefone não disponível",
+        description: "Este cuidador não possui telefone cadastrado.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Limpar o telefone (remover caracteres não numéricos)
+    const telefoneClean = telefone.replace(/\D/g, '');
+    
+    // Verificar se o telefone tem o formato correto
+    let whatsappNumber = telefoneClean;
+    
+    // Se não começar com 55 (código do Brasil), adicionar
+    if (!whatsappNumber.startsWith('55')) {
+      whatsappNumber = '55' + whatsappNumber;
+    }
+    
+    const mensagem = `Olá ${nome}, encontrei seu perfil na plataforma CareConnect e gostaria de conversar sobre serviços de cuidado.`;
+    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(mensagem)}`;
+    
+    window.open(url, '_blank');
+  };
+
+  const toggleFavorito = async (cuidadorId: string) => {
+    const isFavorito = favoritos.includes(cuidadorId);
+    
+    try {
+      if (isFavorito) {
+        // Remover dos favoritos
+        setFavoritos(prev => prev.filter(id => id !== cuidadorId));
+        toast({
+          title: "Removido dos favoritos",
+          description: "Cuidador removido da sua lista de favoritos.",
+        });
+      } else {
+        // Adicionar aos favoritos
+        setFavoritos(prev => [...prev, cuidadorId]);
+        toast({
+          title: "Adicionado aos favoritos",
+          description: "Cuidador adicionado à sua lista de favoritos.",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao gerenciar favoritos:', error);
+    }
+  };
+
+  const loadFavoritos = () => {
+    // Em uma implementação real, isso viria do localStorage ou banco de dados
+    const favoritosLocal = localStorage.getItem(`favoritos_${user?.id}`);
+    if (favoritosLocal) {
+      setFavoritos(JSON.parse(favoritosLocal));
+    }
+  };
+
+  // Salvar favoritos no localStorage quando mudarem
+  useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`favoritos_${user.id}`, JSON.stringify(favoritos));
+    }
+  }, [favoritos, user?.id]);
+
   const handleSelecionarCuidador = (cuidador: any) => {
     setCuidadorSelecionado(cuidador);
     setNovoDepoimento({
@@ -222,10 +221,6 @@ const ClienteDashboard = () => {
     });
   };
 
-  // ✅ Function: handleSubmitDepoimento
-  // 📌 Description: Submits a testimonial for a selected caregiver
-  // 📥 Parameters: e (React.FormEvent) - form submission event
-  // 📤 Returns: Promise<void>
   const handleSubmitDepoimento = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -244,10 +239,8 @@ const ClienteDashboard = () => {
       const { error } = await supabase
         .from('testimonials')
         .insert({
-          name: user?.user_metadata?.name || user?.email || 'Cliente',
-          role: 'Cliente',
           content: novoDepoimento.texto,
-          rating: novoDepoimento.avaliacao, // ✅ Corrigido: removido .toString() para manter como número
+          rating: novoDepoimento.avaliacao,
           published: false,
           customer_id: user?.id,
           caregiver_id: novoDepoimento.cuidador_id
@@ -276,10 +269,6 @@ const ClienteDashboard = () => {
     }
   };
 
-  // ✅ Function: loadMeusDepoimentos
-  // 📌 Description: Loads user's submitted testimonials from database
-  // 📥 Parameters: none
-  // 📤 Returns: Promise<void>
   const loadMeusDepoimentos = async () => {
     if (!user?.id) return;
     
@@ -290,15 +279,7 @@ const ClienteDashboard = () => {
         .eq('customer_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        // Se a tabela não existir, não mostrar erro
-        if (error.code === '42P01') {
-          console.log('Tabela testimonials ainda não criada');
-          setMeusDepoimentos([]);
-          return;
-        }
-        throw error;
-      }
+      if (error && error.code !== '42P01') throw error;
       
       setMeusDepoimentos(data || []);
     } catch (error) {
@@ -307,12 +288,6 @@ const ClienteDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      loadMeusDepoimentos();
-    }
-  }, [user]);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -320,8 +295,8 @@ const ClienteDashboard = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Painel do Cliente</h1>
-              <p className="text-gray-600">Encontre e avalie cuidadores</p>
+              <h1 className="text-2xl font-bold text-gray-900">Busca de Cuidadores</h1>
+              <p className="text-gray-600">Encontre o cuidador ideal para suas necessidades</p>
             </div>
             <Button
               variant="outline"
@@ -336,126 +311,151 @@ const ClienteDashboard = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Busca de Cuidadores */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Search className="w-5 h-5" />
-                  Buscar Cuidadores
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input
-                    placeholder="Nome do cuidador..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <select
-                    value={selectedLocation}
-                    onChange={(e) => setSelectedLocation(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="">Todas as cidades</option>
-                    {cidadesDisponiveis.map((cidade) => (
-                      <option key={cidade} value={cidade}>
-                        {cidade}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="">Todas as categorias</option>
-                    {categoriasDisponiveis.map((categoria) => (
-                      <option key={categoria} value={categoria}>
-                        {categoria}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Button 
-                  className="w-full" 
-                  onClick={handleBuscarCuidadores}
-                  disabled={loadingBusca}
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  {loadingBusca ? "Buscando..." : "Buscar Cuidadores"}
-                </Button>
-              </CardContent>
-            </Card>
+        {/* Filtros no topo */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filtros de Busca
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <Input
+                placeholder="Nome ou especialidade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="col-span-1"
+              />
+              
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">📍 Todas as cidades</option>
+                {cidadesDisponiveis.map((cidade) => (
+                  <option key={cidade} value={cidade}>
+                    {cidade}
+                  </option>
+                ))}
+              </select>
+              
+              <select
+                value={selectedAvailability}
+                onChange={(e) => setSelectedAvailability(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">🕐 Toda disponibilidade</option>
+                <option value="manhã">Manhã</option>
+                <option value="tarde">Tarde</option>
+                <option value="noite">Noite</option>
+                <option value="integral">Período Integral</option>
+              </select>
+              
+              <Button 
+                onClick={handleBuscarCuidadores}
+                disabled={loading}
+                className="w-full"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                {loading ? "Buscando..." : "🔍 Buscar"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-            {/* Resultados da Busca */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Tabela de Resultados */}
+          <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Cuidadores Encontrados</CardTitle>
+                <CardTitle>Cuidadores Encontrados ({cuidadoresEncontrados.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 {!buscaRealizada ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Search className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Use os filtros acima para encontrar cuidadores</p>
-                    <p className="text-sm">Nossa plataforma conecta você aos melhores profissionais</p>
+                  <div className="text-center py-12 text-gray-500">
+                    <Search className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                    <h3 className="text-lg font-medium mb-2">Faça sua primeira busca</h3>
+                    <p>Use os filtros acima para encontrar cuidadores na sua região</p>
                   </div>
                 ) : cuidadoresEncontrados.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <User className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhum cuidador encontrado</p>
-                    <p className="text-sm">Tente ajustar os filtros de busca</p>
+                  <div className="text-center py-12 text-gray-500">
+                    <User className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                    <h3 className="text-lg font-medium mb-2">Nenhum cuidador encontrado</h3>
+                    <p>Tente ajustar os filtros de busca</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {cuidadoresEncontrados.map((cuidador: any) => (
-                      <div key={cuidador.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg">{cuidador.nome}</h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cuidador</TableHead>
+                          <TableHead>Cidade</TableHead>
+                          <TableHead>Telefone</TableHead>
+                          <TableHead className="text-center">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {cuidadoresEncontrados.map((cuidador) => (
+                          <TableRow key={cuidador.id} className="hover:bg-gray-50">
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{cuidador.nome}</p>
+                                <p className="text-sm text-gray-600">{cuidador.cargo}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
                               <span className="flex items-center gap-1">
-                                <MapPin className="w-4 h-4" />
+                                <MapPin className="w-4 h-4 text-gray-400" />
                                 {cuidador.cidade}
                               </span>
-                              <span className="flex items-center gap-1">
-                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                {cuidador.avaliacao}
-                              </span>
-                              <span>{cuidador.experiencia} de experiência</span>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleSelecionarCuidador(cuidador)}
-                            >
-                              Avaliar
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => window.open(`https://wa.me/${cuidador.telefone.replace(/\D/g, '')}`, '_blank')}
-                            >
-                              <Phone className="w-4 h-4 mr-1" />
-                              Contatar
-                            </Button>
-                          </div>
-                        </div>
-                        <p className="text-gray-700 text-sm">{cuidador.descricao}</p>
-                      </div>
-                    ))}
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-mono text-sm">{cuidador.telefone}</span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2 justify-center">
+                                <Button
+                                  size="sm"
+                                  variant={favoritos.includes(cuidador.id) ? "default" : "outline"}
+                                  onClick={() => toggleFavorito(cuidador.id)}
+                                  className="px-2"
+                                >
+                                  <Heart className={`w-4 h-4 ${favoritos.includes(cuidador.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                                </Button>
+                                
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleSelecionarCuidador(cuidador)}
+                                >
+                                  <Star className="w-4 h-4 mr-1" />
+                                  Avaliar
+                                </Button>
+                                
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleWhatsApp(cuidador.telefone, cuidador.nome)}
+                                >
+                                  <Phone className="w-4 h-4 mr-1" />
+                                  WhatsApp
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar - Depoimentos */}
+          {/* Sidebar - Avaliações */}
           <div className="space-y-6">
-            
             {/* Avaliar Cuidador */}
             <Card>
               <CardHeader>
@@ -466,20 +466,20 @@ const ClienteDashboard = () => {
               </CardHeader>
               <CardContent>
                 {!cuidadorSelecionado ? (
-                  <div className="text-center py-4 text-gray-500">
-                    <User className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Selecione um cuidador para avaliar</p>
+                  <div className="text-center py-6 text-gray-500">
+                    <Star className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Selecione um cuidador da tabela para avaliar</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmitDepoimento} className="space-y-4">
-                    <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
                       <p className="font-medium text-blue-900">{cuidadorSelecionado.nome}</p>
-                      <p className="text-sm text-blue-700">Cuidador selecionado</p>
+                      <p className="text-sm text-blue-700">{cuidadorSelecionado.cidade}</p>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Avaliação
+                        Sua Avaliação
                       </label>
                       <select
                         value={novoDepoimento.avaliacao}
@@ -487,13 +487,13 @@ const ClienteDashboard = () => {
                           ...novoDepoimento,
                           avaliacao: parseInt(e.target.value)
                         })}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
                       >
-                        <option value={5}>⭐⭐⭐⭐⭐ Excelente</option>
-                        <option value={4}>⭐⭐⭐⭐ Muito Bom</option>
-                        <option value={3}>⭐⭐⭐ Bom</option>
-                        <option value={2}>⭐⭐ Regular</option>
-                        <option value={1}>⭐ Ruim</option>
+                        <option value={5}>⭐⭐⭐⭐⭐ Excelente (5)</option>
+                        <option value={4}>⭐⭐⭐⭐ Muito Bom (4)</option>
+                        <option value={3}>⭐⭐⭐ Bom (3)</option>
+                        <option value={2}>⭐⭐ Regular (2)</option>
+                        <option value={1}>⭐ Ruim (1)</option>
                       </select>
                     </div>
 
@@ -507,7 +507,7 @@ const ClienteDashboard = () => {
                           ...novoDepoimento,
                           texto: e.target.value
                         })}
-                        placeholder="Como foi sua experiência com este cuidador?"
+                        placeholder="Conte como foi sua experiência com este cuidador..."
                         rows={4}
                         required
                       />
@@ -530,7 +530,7 @@ const ClienteDashboard = () => {
                         disabled={loading}
                         className="flex-1"
                       >
-                        {loading ? "Enviando..." : "Enviar"}
+                        {loading ? "Enviando..." : "Enviar Avaliação"}
                       </Button>
                     </div>
                   </form>
@@ -542,22 +542,22 @@ const ClienteDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Star className="w-5 h-5" />
-                  Meus Depoimentos
+                  <MessageSquare className="w-5 h-5" />
+                  Minhas Avaliações ({meusDepoimentos.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {meusDepoimentos.length === 0 ? (
                   <div className="text-center py-4 text-gray-500">
-                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Nenhum depoimento enviado ainda</p>
+                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">Nenhuma avaliação enviada ainda</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
                     {meusDepoimentos.map((depoimento: any) => (
-                      <div key={depoimento.id} className="border rounded-lg p-3">
+                      <div key={depoimento.id} className="border rounded-lg p-3 bg-white">
                         <div className="flex justify-between items-start mb-2">
-                          <p className="font-medium text-sm">{depoimento.cuidador_nome}</p>
+                          <p className="font-medium text-sm">Cuidador avaliado</p>
                           <div className="flex">
                             {[...Array(parseInt(depoimento.rating))].map((_, i) => (
                               <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
@@ -571,10 +571,10 @@ const ClienteDashboard = () => {
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {depoimento.published ? 'Aprovado' : 'Em análise'}
+                            {depoimento.published ? '✅ Publicado' : '⏳ Em análise'}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {new Date(depoimento.created_at).toLocaleDateString()}
+                            {new Date(depoimento.created_at).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
                       </div>
@@ -587,7 +587,7 @@ const ClienteDashboard = () => {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
@@ -615,10 +615,22 @@ const ClienteDashboard = () => {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
+                <Heart className="w-8 h-8 text-red-500" />
+                <div>
+                  <p className="text-2xl font-bold">{favoritos.length}</p>
+                  <p className="text-sm text-gray-600">Favoritos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
                 <MessageSquare className="w-8 h-8 text-purple-500" />
                 <div>
                   <p className="text-2xl font-bold">{meusDepoimentos.length}</p>
-                  <p className="text-sm text-gray-600">Depoimentos Enviados</p>
+                  <p className="text-sm text-gray-600">Avaliações Enviadas</p>
                 </div>
               </div>
             </CardContent>
