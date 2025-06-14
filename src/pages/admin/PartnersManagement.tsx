@@ -25,6 +25,8 @@ const PartnersManagement = () => {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
   const [newPartner, setNewPartner] = useState({
     name: "",
     logo_url: "",
@@ -89,6 +91,46 @@ const PartnersManagement = () => {
     }
   });
 
+  // Edit partner mutation
+  const editPartnerMutation = useMutation({
+    mutationFn: async (partner: Partner) => {
+      const { data, error } = await supabase
+        .from('partners')
+        .update({
+          name: partner.name,
+          logo_url: partner.logo_url,
+          website_url: partner.website_url,
+          type: partner.type,
+          status: partner.status,
+          description: partner.description,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', partner.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partners'] });
+      setIsEditModalOpen(false);
+      setEditingPartner(null);
+      toast({
+        title: "Partner updated",
+        description: "The partner has been successfully updated.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update partner. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error updating partner:", error);
+    }
+  });
+
   // Delete partner mutation
   const deletePartnerMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -135,6 +177,18 @@ const PartnersManagement = () => {
   const handleAddPartner = (e: React.FormEvent) => {
     e.preventDefault();
     addPartnerMutation.mutate(newPartner);
+  };
+
+  const handleEditPartner = (partner: Partner) => {
+    setEditingPartner(partner);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdatePartner = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingPartner) {
+      editPartnerMutation.mutate(editingPartner);
+    }
   };
 
   if (error) {
@@ -257,7 +311,11 @@ const PartnersManagement = () => {
                         {partner.status || 'Unknown'}
                       </span>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditPartner(partner)}
+                        >
                           <Edit className="w-4 h-4" />
                           <span className="sr-only">Edit</span>
                         </Button>
@@ -376,6 +434,109 @@ const PartnersManagement = () => {
                     disabled={addPartnerMutation.isPending}
                   >
                     {addPartnerMutation.isPending ? 'Adding...' : 'Add Partner'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Partner Modal */}
+      {isEditModalOpen && editingPartner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsEditModalOpen(false)}></div>
+          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-xl font-semibold mb-4">Edit Partner</h3>
+              <form onSubmit={handleUpdatePartner}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Partner Name *
+                    </label>
+                    <Input
+                      required
+                      value={editingPartner.name}
+                      onChange={(e) => setEditingPartner({...editingPartner, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Logo URL
+                    </label>
+                    <Input
+                      type="url"
+                      value={editingPartner.logo_url || ""}
+                      onChange={(e) => setEditingPartner({...editingPartner, logo_url: e.target.value})}
+                      placeholder="https://example.com/logo.png"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Website URL
+                    </label>
+                    <Input
+                      type="url"
+                      value={editingPartner.website_url || ""}
+                      onChange={(e) => setEditingPartner({...editingPartner, website_url: e.target.value})}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <Input
+                      value={editingPartner.description || ""}
+                      onChange={(e) => setEditingPartner({...editingPartner, description: e.target.value})}
+                      placeholder="Brief description of the partner"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Partner Type
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
+                      value={editingPartner.type || "Healthcare Provider"}
+                      onChange={(e) => setEditingPartner({...editingPartner, type: e.target.value})}
+                    >
+                      <option value="Insurance">Insurance</option>
+                      <option value="Healthcare Provider">Healthcare Provider</option>
+                      <option value="Non-Profit">Non-Profit</option>
+                      <option value="Community Organization">Community Organization</option>
+                      <option value="Association">Association</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Status
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
+                      value={editingPartner.status || "Active"}
+                      onChange={(e) => setEditingPartner({...editingPartner, status: e.target.value})}
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-6 flex justify-end space-x-3">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-careconnect-blue hover:bg-careconnect-blue/90"
+                    disabled={editPartnerMutation.isPending}
+                  >
+                    {editPartnerMutation.isPending ? 'Updating...' : 'Update Partner'}
                   </Button>
                 </div>
               </form>
