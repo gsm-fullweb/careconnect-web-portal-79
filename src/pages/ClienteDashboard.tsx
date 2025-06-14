@@ -69,6 +69,12 @@ const ClienteDashboard = () => {
     }
   };
 
+  useEffect(() => {
+    loadCidadesEDisponibilidades();
+    loadMeusDepoimentos();
+    loadFavoritos();
+  }, [user]);
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -239,6 +245,8 @@ const ClienteDashboard = () => {
       const { error } = await supabase
         .from('testimonials')
         .insert({
+          name: user?.user_metadata?.name || user?.email || 'Cliente',
+          role: 'Cliente',
           content: novoDepoimento.texto,
           rating: novoDepoimento.avaliacao,
           published: false,
