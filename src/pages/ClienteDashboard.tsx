@@ -75,9 +75,20 @@ const ClienteDashboard = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      navigate('/');
+      toast({
+        title: "Logout realizado",
+        description: "Você saiu da sua conta.",
+      });
+      setTimeout(() => {
+        navigate('/');
+      }, 200); // Pequeno delay para garantir atualização do contexto antes do redirect
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um problema ao sair. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
