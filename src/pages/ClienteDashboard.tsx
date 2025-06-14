@@ -247,7 +247,7 @@ const ClienteDashboard = () => {
           name: user?.user_metadata?.name || user?.email || 'Cliente',
           role: 'Cliente',
           content: novoDepoimento.texto,
-          rating: novoDepoimento.avaliacao.toString(),
+          rating: novoDepoimento.avaliacao, // ✅ Corrigido: removido .toString() para manter como número
           published: false,
           customer_id: user?.id,
           caregiver_id: novoDepoimento.cuidador_id
