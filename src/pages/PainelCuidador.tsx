@@ -1,13 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { User, Edit, Save, X, FileText, ArrowRight } from "lucide-react";
+import { User, Edit, Save, X, FileText, ArrowRight, Phone, MapPin, GraduationCap, Briefcase, Heart, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate, useNavigate } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const PainelCuidador = () => {
   const { user } = useAuth();
@@ -96,6 +99,14 @@ const PainelCuidador = () => {
     setEditFormData((prev: any) => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setEditFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setEditFormData((prev: any) => ({ ...prev, [name]: checked ? 'Sim' : 'Não' }));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     
@@ -138,9 +149,28 @@ const PainelCuidador = () => {
   };
 
   const handleCompleteRegistration = () => {
-    // Store candidate data in localStorage for form auto-fill
     localStorage.setItem('caregiver_data', JSON.stringify(candidatoData));
     navigate('/cadastrar-cuidador');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Logout realizado",
+        description: "Você saiu da sua conta.",
+      });
+      setTimeout(() => {
+        navigate('/');
+      }, 200);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      toast({
+        title: "Erro ao sair",
+        description: "Ocorreu um problema ao sair. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Check if registration is incomplete
@@ -166,7 +196,7 @@ const PainelCuidador = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Painel do Cuidador</h1>
-              <p className="text-gray-600">Bem-vindo, {candidatoData?.nome}</p>
+              <p className="text-gray-600">Bem-vindo(a), {candidatoData?.nome}</p>
             </div>
             <div className="flex gap-3">
               {/* Complete Registration Button */}
@@ -210,7 +240,7 @@ const PainelCuidador = () => {
               )}
               <Button
                 variant="outline"
-                onClick={() => supabase.auth.signOut()}
+                onClick={handleLogout}
               >
                 Sair
               </Button>
@@ -238,7 +268,7 @@ const PainelCuidador = () => {
       )}
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 space-y-6">
         {/* Informações Pessoais */}
         <Card>
           <CardHeader>
@@ -270,19 +300,6 @@ const PainelCuidador = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                {editMode ? (
-                  <Input 
-                    name="telefone"
-                    value={editFormData.telefone || ''}
-                    onChange={handleInputChange}
-                  />
-                ) : (
-                  <p className="text-gray-900">{candidatoData?.telefone}</p>
-                )}
-              </div>
-              
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
                 {editMode ? (
                   <Input 
@@ -295,7 +312,121 @@ const PainelCuidador = () => {
                   <p className="text-gray-900">{candidatoData?.data_nascimento}</p>
                 )}
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                {editMode ? (
+                  <Input 
+                    name="cpf"
+                    value={editFormData.cpf || ''}
+                    onChange={handleInputChange}
+                    placeholder="000.000.000-00"
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.cpf || 'Não informado'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">RG</label>
+                {editMode ? (
+                  <Input 
+                    name="RG"
+                    value={editFormData.RG || ''}
+                    onChange={handleInputChange}
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.RG || 'Não informado'}</p>
+                )}
+              </div>
               
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Possui filhos</label>
+                {editMode ? (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="possui_filhos"
+                      checked={editFormData.possui_filhos === 'Sim'}
+                      onCheckedChange={(checked) => handleCheckboxChange('possui_filhos', checked as boolean)}
+                    />
+                    <label htmlFor="possui_filhos" className="text-sm">Sim, tenho filhos</label>
+                  </div>
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.possui_filhos}</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fumante</label>
+                {editMode ? (
+                  <Select onValueChange={(value) => handleSelectChange('fumante', value)} value={editFormData.fumante || ''}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sim">Sim</SelectItem>
+                      <SelectItem value="Não">Não</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.fumante}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Contato */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="w-5 h-5" />
+              Informações de Contato
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                {editMode ? (
+                  <Input 
+                    name="telefone"
+                    value={editFormData.telefone || ''}
+                    onChange={handleInputChange}
+                    placeholder="(11) 99999-9999"
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.telefone}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Endereço */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Endereço
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                {editMode ? (
+                  <Input 
+                    name="cep"
+                    value={editFormData.cep || ''}
+                    onChange={handleInputChange}
+                    placeholder="00000-000"
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.cep || 'Não informado'}</p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
                 {editMode ? (
@@ -308,23 +439,79 @@ const PainelCuidador = () => {
                   <p className="text-gray-900">{candidatoData?.cidade}</p>
                 )}
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fumante</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                 {editMode ? (
-                  <select
-                    name="fumante"
-                    value={editFormData.fumante || ''}
+                  <Input 
+                    name="estado"
+                    value={editFormData.estado || ''}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="Sim">Sim</option>
-                    <option value="Não">Não</option>
-                  </select>
+                  />
                 ) : (
-                  <p className="text-gray-900">{candidatoData?.fumante}</p>
+                  <p className="text-gray-900">{candidatoData?.estado || 'Não informado'}</p>
                 )}
               </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Endereço Completo</label>
+                {editMode ? (
+                  <Input 
+                    name="endereco"
+                    value={editFormData.endereco || ''}
+                    onChange={handleInputChange}
+                    placeholder="Rua, número, complemento"
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.endereco || 'Não informado'}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Formação Acadêmica */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="w-5 h-5" />
+              Formação Acadêmica
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Escolaridade</label>
+              {editMode ? (
+                <Select onValueChange={(value) => handleSelectChange('escolaridade', value)} value={editFormData.escolaridade || ''}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ensino Fundamental">Ensino Fundamental</SelectItem>
+                    <SelectItem value="Ensino Médio">Ensino Médio</SelectItem>
+                    <SelectItem value="Técnico">Curso Técnico</SelectItem>
+                    <SelectItem value="Superior">Ensino Superior</SelectItem>
+                    <SelectItem value="Pós-graduação">Pós-graduação</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-gray-900">{candidatoData?.escolaridade || 'Não informado'}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cursos Realizados</label>
+              {editMode ? (
+                <Textarea 
+                  name="cursos"
+                  value={editFormData.cursos || ''}
+                  onChange={handleInputChange}
+                  rows={3}
+                  placeholder="Descreva os cursos relacionados à área da saúde ou cuidados com idosos"
+                />
+              ) : (
+                <p className="text-gray-900">{candidatoData?.cursos || 'Não informado'}</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -332,39 +519,87 @@ const PainelCuidador = () => {
         {/* Informações Profissionais */}
         <Card>
           <CardHeader>
-            <CardTitle>Informações Profissionais</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5" />
+              Informações Profissionais
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Escolaridade</label>
-              {editMode ? (
-                <Input 
-                  name="escolaridade"
-                  value={editFormData.escolaridade || ''}
-                  onChange={handleInputChange}
-                />
-              ) : (
-                <p className="text-gray-900">{candidatoData?.escolaridade || 'Não informado'}</p>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoria Profissional</label>
+                {editMode ? (
+                  <Select onValueChange={(value) => handleSelectChange('cargo', value)} value={editFormData.cargo || ''}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cuidador(a) de Idosos">Cuidador(a) de Idosos</SelectItem>
+                      <SelectItem value="Técnico(a) de Enfermagem">Técnico(a) de Enfermagem</SelectItem>
+                      <SelectItem value="Enfermeiro(a)">Enfermeiro(a)</SelectItem>
+                      <SelectItem value="Fisioterapeuta">Fisioterapeuta</SelectItem>
+                      <SelectItem value="Terapeuta Ocupacional">Terapeuta Ocupacional</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.cargo || 'Não informado'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Disponibilidade</label>
+                {editMode ? (
+                  <Select onValueChange={(value) => handleSelectChange('disponibilidade_horarios', value)} value={editFormData.disponibilidade_horarios || ''}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Período Diurno">Período Diurno</SelectItem>
+                      <SelectItem value="Período Noturno">Período Noturno</SelectItem>
+                      <SelectItem value="Período Integral">Período Integral</SelectItem>
+                      <SelectItem value="Horário Flexível">Horário Flexível</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.disponibilidade_horarios || 'Não informado'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Experiência</label>
+                {editMode ? (
+                  <Select onValueChange={(value) => handleSelectChange('possui_experiencia', value)} value={editFormData.possui_experiencia || ''}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sim">Sim</SelectItem>
+                      <SelectItem value="Não">Não</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.possui_experiencia}</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Disponível para Dormir no Local</label>
+                {editMode ? (
+                  <Select onValueChange={(value) => handleSelectChange('disponivel_dormir_local', value)} value={editFormData.disponivel_dormir_local || ''}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Sim">Sim</SelectItem>
+                      <SelectItem value="Não">Não</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.disponivel_dormir_local}</p>
+                )}
+              </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Experiência</label>
-              {editMode ? (
-                <select
-                  name="possui_experiencia"
-                  value={editFormData.possui_experiencia || ''}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  <option value="Sim">Sim</option>
-                  <option value="Não">Não</option>
-                </select>
-              ) : (
-                <p className="text-gray-900">{candidatoData?.possui_experiencia}</p>
-              )}
-            </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Descrição da Experiência</label>
               {editMode ? (
@@ -373,26 +608,116 @@ const PainelCuidador = () => {
                   value={editFormData.descricao_experiencia || ''}
                   onChange={handleInputChange}
                   rows={3}
+                  placeholder="Descreva suas experiências anteriores..."
                 />
               ) : (
                 <p className="text-gray-900">{candidatoData?.descricao_experiencia || 'Não informado'}</p>
               )}
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Disponível para Dormir no Local</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Experiência Detalhada</label>
               {editMode ? (
-                <select
-                  name="disponivel_dormir_local"
-                  value={editFormData.disponivel_dormir_local || ''}
+                <Textarea 
+                  name="experiencia"
+                  value={editFormData.experiencia || ''}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  <option value="Sim">Sim</option>
-                  <option value="Não">Não</option>
-                </select>
+                  rows={4}
+                  placeholder="Conte um pouco sobre suas experiências anteriores, mencionando o tempo de atuação..."
+                />
               ) : (
-                <p className="text-gray-900">{candidatoData?.disponivel_dormir_local}</p>
+                <p className="text-gray-900">{candidatoData?.experiencia || 'Não informado'}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Registros Profissionais */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5" />
+              Registros Profissionais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">COREN</label>
+                {editMode ? (
+                  <Input 
+                    name="coren"
+                    value={editFormData.coren || ''}
+                    onChange={handleInputChange}
+                    placeholder="Número do COREN"
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.coren || 'Não informado'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CREFITO</label>
+                {editMode ? (
+                  <Input 
+                    name="crefito"
+                    value={editFormData.crefito || ''}
+                    onChange={handleInputChange}
+                    placeholder="Número do CREFITO"
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.crefito || 'Não informado'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">CRM</label>
+                {editMode ? (
+                  <Input 
+                    name="crm"
+                    value={editFormData.crm || ''}
+                    onChange={handleInputChange}
+                    placeholder="Número do CRM"
+                  />
+                ) : (
+                  <p className="text-gray-900">{candidatoData?.crm || 'Não informado'}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Referências */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Heart className="w-5 h-5" />
+              Referências Profissionais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Referências</label>
+              {editMode ? (
+                <Textarea 
+                  name="referencias"
+                  value={editFormData.referencias || ''}
+                  onChange={handleInputChange}
+                  rows={4}
+                  placeholder="Liste suas referências profissionais separadas por ' | '"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {candidatoData?.referencias ? (
+                    candidatoData.referencias.split(' | ').map((ref: string, index: number) => (
+                      <p key={index} className="text-gray-900 p-2 bg-gray-50 rounded">
+                        <span className="font-medium">Referência {index + 1}:</span> {ref}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="text-gray-900">Não informado</p>
+                  )}
+                </div>
               )}
             </div>
           </CardContent>
