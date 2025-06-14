@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin } from "lucide-react";
+import { MapPin, Home, Map } from "lucide-react";
 
 interface AddressSectionProps {
   editMode: boolean;
@@ -21,34 +21,45 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
   handleSelectChange,
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="w-5 h-5" />
+    <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-white">
+      <CardHeader className="bg-gradient-to-r from-careconnect-green to-careconnect-green/90 text-white rounded-t-lg">
+        <CardTitle className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <MapPin className="w-5 h-5" />
+          </div>
           Endereço
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+      <CardContent className="p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <MapPin className="w-4 h-4" />
+              CEP
+            </label>
             {editMode ? (
               <Input 
                 name="cep"
                 value={editFormData.cep || ''}
                 onChange={handleInputChange}
                 placeholder="00000-000"
+                className="border-gray-300 focus:border-careconnect-green focus:ring-careconnect-green"
               />
             ) : (
-              <p className="text-gray-900">{candidatoData?.cep || 'Não informado'}</p>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-900">{candidatoData?.cep || 'Não informado'}</p>
+              </div>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Map className="w-4 h-4" />
+              Estado
+            </label>
             {editMode ? (
               <Select onValueChange={(value) => handleSelectChange('estado', value)} value={editFormData.estado || ''}>
-                <SelectTrigger>
+                <SelectTrigger className="border-gray-300 focus:border-careconnect-green focus:ring-careconnect-green">
                   <SelectValue placeholder="Selecione o estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -62,34 +73,48 @@ export const AddressSection: React.FC<AddressSectionProps> = ({
                 </SelectContent>
               </Select>
             ) : (
-              <p className="text-gray-900">{candidatoData?.estado || 'Não informado'}</p>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-900">{candidatoData?.estado || 'Não informado'}</p>
+              </div>
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <MapPin className="w-4 h-4" />
+              Cidade
+            </label>
             {editMode ? (
               <Input 
                 name="cidade"
                 value={editFormData.cidade || ''}
                 onChange={handleInputChange}
+                className="border-gray-300 focus:border-careconnect-green focus:ring-careconnect-green"
               />
             ) : (
-              <p className="text-gray-900">{candidatoData?.cidade}</p>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-900">{candidatoData?.cidade || 'Não informado'}</p>
+              </div>
             )}
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Endereço Completo</label>
+          <div className="md:col-span-1 space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Home className="w-4 h-4" />
+              Endereço Completo
+            </label>
             {editMode ? (
               <Input 
                 name="endereco"
                 value={editFormData.endereco || ''}
                 onChange={handleInputChange}
                 placeholder="Rua, número, complemento"
+                className="border-gray-300 focus:border-careconnect-green focus:ring-careconnect-green"
               />
             ) : (
-              <p className="text-gray-900">{candidatoData?.endereco || 'Não informado'}</p>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-gray-900">{candidatoData?.endereco || 'Não informado'}</p>
+              </div>
             )}
           </div>
         </div>
