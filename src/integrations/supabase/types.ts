@@ -13,41 +13,29 @@ export type Database = {
         Row: {
           author_id: string | null
           content: string
-          cover_image: string | null
-          created_at: string
+          created_at: string | null
           excerpt: string | null
           id: string
           published: boolean | null
-          published_at: string | null
-          slug: string
           title: string
-          updated_at: string
         }
         Insert: {
           author_id?: string | null
           content: string
-          cover_image?: string | null
-          created_at?: string
+          created_at?: string | null
           excerpt?: string | null
           id?: string
           published?: boolean | null
-          published_at?: string | null
-          slug: string
           title: string
-          updated_at?: string
         }
         Update: {
           author_id?: string | null
           content?: string
-          cover_image?: string | null
-          created_at?: string
+          created_at?: string | null
           excerpt?: string | null
           id?: string
           published?: boolean | null
-          published_at?: string | null
-          slug?: string
           title?: string
-          updated_at?: string
         }
         Relationships: [
           {
@@ -66,10 +54,13 @@ export type Database = {
           cep: string
           cidade: string
           coren: string | null
+          cpf: string | null
+          crefito: string | null
+          crm: string | null
           cursos: string | null
           data_cadastro: string | null
           data_nascimento: string
-          desconfortos_atividades: string | null
+          Declaracao: string | null
           descricao: string | null
           descricao_experiencia: string | null
           disponibilidade_horarios: string | null
@@ -77,17 +68,23 @@ export type Database = {
           email: string
           endereco: string
           escolaridade: string
+          estado: string | null
           experiencia: string | null
           fumante: string
           id: number
           nome: string
           perfil_profissional: string | null
           possui_experiencia: string
-          possui_filhos: boolean
+          possui_filhos: string
+          referencia_1: string | null
+          referencia_2: string | null
+          referencia_3: string | null
           referencias: string | null
+          RG: string | null
           status_candidatura: string
           telefone: string
           ultima_atualizacao: string | null
+          updated_at: string | null
         }
         Insert: {
           ativo?: string | null
@@ -95,10 +92,13 @@ export type Database = {
           cep: string
           cidade: string
           coren?: string | null
+          cpf?: string | null
+          crefito?: string | null
+          crm?: string | null
           cursos?: string | null
           data_cadastro?: string | null
           data_nascimento: string
-          desconfortos_atividades?: string | null
+          Declaracao?: string | null
           descricao?: string | null
           descricao_experiencia?: string | null
           disponibilidade_horarios?: string | null
@@ -106,17 +106,23 @@ export type Database = {
           email: string
           endereco: string
           escolaridade: string
+          estado?: string | null
           experiencia?: string | null
           fumante: string
           id?: number
           nome: string
           perfil_profissional?: string | null
           possui_experiencia: string
-          possui_filhos: boolean
+          possui_filhos: string
+          referencia_1?: string | null
+          referencia_2?: string | null
+          referencia_3?: string | null
           referencias?: string | null
+          RG?: string | null
           status_candidatura: string
           telefone: string
           ultima_atualizacao?: string | null
+          updated_at?: string | null
         }
         Update: {
           ativo?: string | null
@@ -124,10 +130,13 @@ export type Database = {
           cep?: string
           cidade?: string
           coren?: string | null
+          cpf?: string | null
+          crefito?: string | null
+          crm?: string | null
           cursos?: string | null
           data_cadastro?: string | null
           data_nascimento?: string
-          desconfortos_atividades?: string | null
+          Declaracao?: string | null
           descricao?: string | null
           descricao_experiencia?: string | null
           disponibilidade_horarios?: string | null
@@ -135,107 +144,23 @@ export type Database = {
           email?: string
           endereco?: string
           escolaridade?: string
+          estado?: string | null
           experiencia?: string | null
           fumante?: string
           id?: number
           nome?: string
           perfil_profissional?: string | null
           possui_experiencia?: string
-          possui_filhos?: boolean
+          possui_filhos?: string
+          referencia_1?: string | null
+          referencia_2?: string | null
+          referencia_3?: string | null
           referencias?: string | null
+          RG?: string | null
           status_candidatura?: string
           telefone?: string
           ultima_atualizacao?: string | null
-        }
-        Relationships: []
-      }
-      caregivers: {
-        Row: {
-          address: string | null
-          availability: string | null
-          birth_date: string | null
-          care_category: string | null
-          cep: string | null
-          city: string | null
-          coren: string | null
-          courses: string | null
-          created_at: string
-          crefito: string | null
-          crm: string | null
-          education: string | null
-          email: string
-          experience: string | null
-          has_children: boolean | null
-          id: string
-          name: string
-          reference1: string | null
-          reference2: string | null
-          reference3: string | null
-          sleep_at_client: boolean | null
-          smoker: boolean | null
-          state: string | null
-          status: string | null
-          updated_at: string
-          user_id: string | null
-          whatsapp: string | null
-        }
-        Insert: {
-          address?: string | null
-          availability?: string | null
-          birth_date?: string | null
-          care_category?: string | null
-          cep?: string | null
-          city?: string | null
-          coren?: string | null
-          courses?: string | null
-          created_at?: string
-          crefito?: string | null
-          crm?: string | null
-          education?: string | null
-          email: string
-          experience?: string | null
-          has_children?: boolean | null
-          id?: string
-          name: string
-          reference1?: string | null
-          reference2?: string | null
-          reference3?: string | null
-          sleep_at_client?: boolean | null
-          smoker?: boolean | null
-          state?: string | null
-          status?: string | null
-          updated_at?: string
-          user_id?: string | null
-          whatsapp?: string | null
-        }
-        Update: {
-          address?: string | null
-          availability?: string | null
-          birth_date?: string | null
-          care_category?: string | null
-          cep?: string | null
-          city?: string | null
-          coren?: string | null
-          courses?: string | null
-          created_at?: string
-          crefito?: string | null
-          crm?: string | null
-          education?: string | null
-          email?: string
-          experience?: string | null
-          has_children?: boolean | null
-          id?: string
-          name?: string
-          reference1?: string | null
-          reference2?: string | null
-          reference3?: string | null
-          sleep_at_client?: boolean | null
-          smoker?: boolean | null
-          state?: string | null
-          status?: string | null
-          updated_at?: string
-          user_id?: string | null
-          whatsapp?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -269,6 +194,66 @@ export type Database = {
         }
         Relationships: []
       }
+      customer: {
+        Row: {
+          address: string | null
+          birth_date: string | null
+          cep: string | null
+          city: string | null
+          created_at: string
+          email: string
+          has_children: boolean | null
+          id: string
+          name: string
+          necessity: string | null
+          smoker: boolean | null
+          special_care: string | null
+          state: string | null
+          status: string | null
+          updated_at: string
+          user_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          created_at?: string
+          email: string
+          has_children?: boolean | null
+          id?: string
+          name: string
+          necessity?: string | null
+          smoker?: boolean | null
+          special_care?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          birth_date?: string | null
+          cep?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          has_children?: boolean | null
+          id?: string
+          name?: string
+          necessity?: string | null
+          smoker?: boolean | null
+          special_care?: string | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           created_at: string
@@ -276,7 +261,8 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
-          published: boolean | null
+          status: string | null
+          type: string | null
           updated_at: string
           website_url: string | null
         }
@@ -286,7 +272,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
-          published?: boolean | null
+          status?: string | null
+          type?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -296,7 +283,8 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
-          published?: boolean | null
+          status?: string | null
+          type?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -345,51 +333,43 @@ export type Database = {
         Row: {
           avatar_url: string | null
           caregiver_id: string | null
-          content: string
-          created_at: string
+          content: string | null
+          created_at: string | null
           customer_id: string | null
           id: string
-          name: string
+          name: string | null
           published: boolean | null
           rating: number | null
           role: string | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           caregiver_id?: string | null
-          content: string
-          created_at?: string
+          content?: string | null
+          created_at?: string | null
           customer_id?: string | null
           id?: string
-          name: string
+          name?: string | null
           published?: boolean | null
           rating?: number | null
           role?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           caregiver_id?: string | null
-          content?: string
-          created_at?: string
+          content?: string | null
+          created_at?: string | null
           customer_id?: string | null
           id?: string
-          name?: string
+          name?: string | null
           published?: boolean | null
           rating?: number | null
           role?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "testimonials_caregiver_id_fkey"
-            columns: ["caregiver_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
