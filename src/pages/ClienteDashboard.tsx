@@ -18,8 +18,8 @@ const ClienteDashboard = () => {
   
   // Estados principais
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
-  const [selectedCargo, setSelectedCargo] = useState("");
+  const [selectedCity, setSelectedCity] = useState("__all__");
+  const [selectedCargo, setSelectedCargo] = useState("__all__");
   const [cuidadoresEncontrados, setCuidadoresEncontrados] = useState([]);
   const [cuidadorSelecionado, setCuidadorSelecionado] = useState(null);
   const [buscaRealizada, setBuscaRealizada] = useState(false);
@@ -97,18 +97,18 @@ const ClienteDashboard = () => {
         .select('*')
         .eq('status_candidatura', 'Aprovado');
       
-      // Aplicar filtro de nome se houver termo de busca
+      // Filtro nome
       if (termoNormalizado) {
         query = query.ilike('nome', `%${termoNormalizado}%`);
       }
       
-      // Aplicar filtro de cidade se selecionada
-      if (selectedCity) {
+      // Filtro cidade (desconsidera se "__all__")
+      if (selectedCity && selectedCity !== "__all__") {
         query = query.eq('cidade', selectedCity);
       }
       
-      // Aplicar filtro de cargo se selecionado
-      if (selectedCargo) {
+      // Filtro cargo (desconsidera se "__all__")
+      if (selectedCargo && selectedCargo !== "__all__") {
         query = query.eq('cargo', selectedCargo);
       }
       
@@ -167,8 +167,8 @@ const ClienteDashboard = () => {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setSelectedCity("");
-    setSelectedCargo("");
+    setSelectedCity("__all__");
+    setSelectedCargo("__all__");
     setCuidadoresEncontrados([]);
     setBuscaRealizada(false);
     
@@ -383,7 +383,7 @@ const ClienteDashboard = () => {
                     <SelectValue placeholder="Selecione uma cidade" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                    <SelectItem value="">Todas as cidades</SelectItem>
+                    <SelectItem value="__all__">Todas as cidades</SelectItem>
                     {availableCities.map((city) => (
                       <SelectItem key={city} value={city}>{city}</SelectItem>
                     ))}
@@ -400,7 +400,7 @@ const ClienteDashboard = () => {
                     <SelectValue placeholder="Selecione um cargo" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                    <SelectItem value="">Todos os cargos</SelectItem>
+                    <SelectItem value="__all__">Todos os cargos</SelectItem>
                     {availableCargos.map((cargo) => (
                       <SelectItem key={cargo} value={cargo}>{cargo}</SelectItem>
                     ))}
@@ -431,7 +431,7 @@ const ClienteDashboard = () => {
             </div>
             
             {/* Filtros aplicados */}
-            {(searchTerm || selectedCity || selectedCargo) && (
+            {(searchTerm || (selectedCity && selectedCity !== "__all__") || (selectedCargo && selectedCargo !== "__all__")) && (
               <div className="flex flex-wrap gap-2 pt-2 border-t">
                 <span className="text-sm text-gray-600">Filtros aplicados:</span>
                 {searchTerm && (
@@ -439,12 +439,12 @@ const ClienteDashboard = () => {
                     Nome: {searchTerm}
                   </span>
                 )}
-                {selectedCity && (
+                {selectedCity && selectedCity !== "__all__" && (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                     Cidade: {selectedCity}
                   </span>
                 )}
-                {selectedCargo && (
+                {selectedCargo && selectedCargo !== "__all__" && (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
                     Cargo: {selectedCargo}
                   </span>
