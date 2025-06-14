@@ -26,9 +26,9 @@ export const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
   return (
     <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-white">
       <CardHeader className="bg-gradient-to-r from-careconnect-blue to-careconnect-blue/90 text-white rounded-t-lg">
-        <CardTitle className="flex items-center gap-3">
+        <CardTitle className="flex items-center gap-3 text-white">
           <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-            <User className="w-5 h-5" />
+            <User className="w-5 h-5 text-white" />
           </div>
           Informações Pessoais
         </CardTitle>
