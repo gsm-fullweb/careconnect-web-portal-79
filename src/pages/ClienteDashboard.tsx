@@ -55,35 +55,46 @@ const ClienteDashboard = () => {
     setBuscaRealizada(true);
     
     try {
+      console.log('Iniciando busca de cuidadores...');
+      
       let query = supabase
         .from('candidatos_cuidadores_rows')
         .select('*')
-        .eq('ativo', 'true')
         .eq('status_candidatura', 'Aprovado');
       
       // Filtrar por nome se houver termo de busca
       if (searchTerm && searchTerm.trim()) {
         const termo = searchTerm.trim().toLowerCase();
+        console.log('Buscando por termo:', termo);
         query = query.ilike('nome', `%${termo}%`);
       }
       
-      const { data, error } = await query.order('nome').limit(20);
+      const { data, error } = await query.order('nome').limit(50);
       
-      if (error) throw error;
+      console.log('Resultado da busca:', { data, error });
+      
+      if (error) {
+        console.error('Erro na query:', error);
+        throw error;
+      }
       
       // Mapear os dados para o formato da tabela
-      const cuidadoresFormatados = (data || []).map(cuidador => ({
-        id: cuidador.id,
-        nome: cuidador.nome || 'Nome não informado',
-        cidade: cuidador.cidade || 'Não informado',
-        telefone: cuidador.telefone || 'Não informado',
-        cargo: cuidador.cargo || 'Cuidador',
-        experiencia: cuidador.experiencia || 'Não informado',
-        email: cuidador.email,
-        disponibilidade: cuidador.disponibilidade_horarios || 'Não informado',
-        descricao: cuidador.descricao_experiencia || 'Profissional experiente'
-      }));
+      const cuidadoresFormatados = (data || []).map(cuidador => {
+        console.log('Processando cuidador:', cuidador);
+        return {
+          id: cuidador.id,
+          nome: cuidador.nome || 'Nome não informado',
+          cidade: cuidador.cidade || 'Não informado',
+          telefone: cuidador.telefone || 'Não informado',
+          cargo: cuidador.cargo || 'Cuidador',
+          experiencia: cuidador.experiencia || 'Não informado',
+          email: cuidador.email,
+          disponibilidade: cuidador.disponibilidade_horarios || 'Não informado',
+          descricao: cuidador.descricao_experiencia || 'Profissional experiente'
+        };
+      });
       
+      console.log('Cuidadores formatados:', cuidadoresFormatados);
       setCuidadoresEncontrados(cuidadoresFormatados);
       
       toast({
@@ -98,6 +109,7 @@ const ClienteDashboard = () => {
         description: "Ocorreu um erro ao buscar cuidadores. Tente novamente.",
         variant: "destructive"
       });
+      setCuidadoresEncontrados([]);
     } finally {
       setLoading(false);
     }
@@ -286,9 +298,10 @@ const ClienteDashboard = () => {
           <CardContent>
             <div className="flex gap-4">
               <Input
-                placeholder="Digite o nome do cuidador..."
+                placeholder="Digite o nome do cuidador (deixe vazio para ver todos)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleBuscarCuidadores()}
                 className="flex-1"
               />
               <Button 
@@ -300,6 +313,9 @@ const ClienteDashboard = () => {
                 {loading ? "Buscando..." : "Buscar"}
               </Button>
             </div>
+            <p className="text-sm text-gray-500 mt-2">
+              Deixe o campo vazio e clique em "Buscar" para ver todos os cuidadores aprovados
+            </p>
           </CardContent>
         </Card>
 
@@ -315,13 +331,13 @@ const ClienteDashboard = () => {
                   <div className="text-center py-12 text-gray-500">
                     <Search className="w-16 h-16 mx-auto mb-4 opacity-30" />
                     <h3 className="text-lg font-medium mb-2">Faça sua primeira busca</h3>
-                    <p>Digite o nome de um cuidador e clique em "Buscar"</p>
+                    <p>Digite o nome de um cuidador ou deixe vazio e clique em "Buscar"</p>
                   </div>
                 ) : cuidadoresEncontrados.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <User className="w-16 h-16 mx-auto mb-4 opacity-30" />
                     <h3 className="text-lg font-medium mb-2">Nenhum cuidador encontrado</h3>
-                    <p>Tente buscar por outro nome</p>
+                    <p>Tente buscar por outro nome ou deixe vazio para ver todos</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
