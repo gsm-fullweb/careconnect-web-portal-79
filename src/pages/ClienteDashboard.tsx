@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Search, MessageSquare, User, Star, MapPin, Phone, LogOut, Heart, Filter } from "lucide-react";
+import { Search, MessageSquare, User, Star, MapPin, Phone, LogOut, Heart } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,8 +18,6 @@ const ClienteDashboard = () => {
   
   // Estados principais
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedAvailability, setSelectedAvailability] = useState("");
   const [cuidadoresEncontrados, setCuidadoresEncontrados] = useState([]);
   const [cuidadorSelecionado, setCuidadorSelecionado] = useState(null);
   const [buscaRealizada, setBuscaRealizada] = useState(false);
@@ -34,45 +32,13 @@ const ClienteDashboard = () => {
     avaliacao: 5
   });
   const [meusDepoimentos, setMeusDepoimentos] = useState([]);
-  
-  // Dados dinâmicos
-  const [cidadesDisponiveis, setCidadesDisponiveis] = useState([]);
-  const [disponibilidadesDisponiveis, setDisponibilidadesDisponiveis] = useState([]);
 
   // Carregar dados iniciais
   useEffect(() => {
-    loadCidadesEDisponibilidades();
-    loadMeusDepoimentos();
-    loadFavoritos();
-  }, [user]);
-
-  const loadCidadesEDisponibilidades = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('candidatos_cuidadores_rows')
-        .select('cidade, disponibilidade_horarios')
-        .eq('ativo', 'true')
-        .eq('status_candidatura', 'Aprovado');
-      
-      if (error) throw error;
-      
-      // Extrair cidades únicas (removendo valores vazios e null)
-      const cidades = [...new Set(data?.map(item => item.cidade).filter(cidade => cidade && cidade.trim() !== ''))];
-      setCidadesDisponiveis(cidades.sort());
-      
-      // Extrair disponibilidades únicas
-      const disponibilidades = [...new Set(data?.map(item => item.disponibilidade_horarios).filter(Boolean))];
-      setDisponibilidadesDisponiveis(disponibilidades.sort());
-      
-    } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+    if (user) {
+      loadMeusDepoimentos();
+      loadFavoritos();
     }
-  };
-
-  useEffect(() => {
-    loadCidadesEDisponibilidades();
-    loadMeusDepoimentos();
-    loadFavoritos();
   }, [user]);
 
   const handleLogout = async () => {
@@ -95,23 +61,13 @@ const ClienteDashboard = () => {
         .eq('ativo', 'true')
         .eq('status_candidatura', 'Aprovado');
       
-      // Filtrar por nome/especialidade se houver termo de busca
+      // Filtrar por nome se houver termo de busca
       if (searchTerm && searchTerm.trim()) {
         const termo = searchTerm.trim().toLowerCase();
-        query = query.or(`nome.ilike.%${termo}%,cargo.ilike.%${termo}%,descricao_experiencia.ilike.%${termo}%`);
+        query = query.ilike('nome', `%${termo}%`);
       }
       
-      // Filtrar por cidade se selecionada
-      if (selectedLocation && selectedLocation !== '') {
-        query = query.eq('cidade', selectedLocation);
-      }
-      
-      // Filtrar por disponibilidade se selecionada
-      if (selectedAvailability && selectedAvailability !== '') {
-        query = query.ilike('disponibilidade_horarios', `%${selectedAvailability}%`);
-      }
-      
-      const { data, error } = await query.order('nome');
+      const { data, error } = await query.order('nome').limit(20);
       
       if (error) throw error;
       
@@ -119,8 +75,8 @@ const ClienteDashboard = () => {
       const cuidadoresFormatados = (data || []).map(cuidador => ({
         id: cuidador.id,
         nome: cuidador.nome || 'Nome não informado',
-        cidade: cuidador.cidade || 'Cidade não informada',
-        telefone: cuidador.telefone || 'Telefone não informado',
+        cidade: cuidador.cidade || 'Não informado',
+        telefone: cuidador.telefone || 'Não informado',
         cargo: cuidador.cargo || 'Cuidador',
         experiencia: cuidador.experiencia || 'Não informado',
         email: cuidador.email,
@@ -148,7 +104,7 @@ const ClienteDashboard = () => {
   };
 
   const handleWhatsApp = (telefone: string, nome: string) => {
-    if (!telefone || telefone === 'Telefone não informado') {
+    if (!telefone || telefone === 'Não informado') {
       toast({
         title: "Telefone não disponível",
         description: "Este cuidador não possui telefone cadastrado.",
@@ -319,55 +275,29 @@ const ClienteDashboard = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Filtros no topo */}
+        {/* Busca simples */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Filter className="w-5 h-5" />
-              Filtros de Busca
+              <Search className="w-5 h-5" />
+              Buscar Cuidadores
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div className="flex gap-4">
               <Input
-                placeholder="Nome ou especialidade..."
+                placeholder="Digite o nome do cuidador..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="col-span-1"
+                className="flex-1"
               />
-              
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
-              >
-                <option value="">📍 Todas as cidades</option>
-                {cidadesDisponiveis.map((cidade) => (
-                  <option key={cidade} value={cidade}>
-                    {cidade}
-                  </option>
-                ))}
-              </select>
-              
-              <select
-                value={selectedAvailability}
-                onChange={(e) => setSelectedAvailability(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
-              >
-                <option value="">🕐 Toda disponibilidade</option>
-                <option value="manhã">Manhã</option>
-                <option value="tarde">Tarde</option>
-                <option value="noite">Noite</option>
-                <option value="integral">Período Integral</option>
-              </select>
-              
               <Button 
                 onClick={handleBuscarCuidadores}
                 disabled={loading}
-                className="w-full"
+                className="min-w-[120px]"
               >
                 <Search className="w-4 h-4 mr-2" />
-                {loading ? "Buscando..." : "🔍 Buscar"}
+                {loading ? "Buscando..." : "Buscar"}
               </Button>
             </div>
           </CardContent>
@@ -385,13 +315,13 @@ const ClienteDashboard = () => {
                   <div className="text-center py-12 text-gray-500">
                     <Search className="w-16 h-16 mx-auto mb-4 opacity-30" />
                     <h3 className="text-lg font-medium mb-2">Faça sua primeira busca</h3>
-                    <p>Use os filtros acima para encontrar cuidadores na sua região</p>
+                    <p>Digite o nome de um cuidador e clique em "Buscar"</p>
                   </div>
                 ) : cuidadoresEncontrados.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <User className="w-16 h-16 mx-auto mb-4 opacity-30" />
                     <h3 className="text-lg font-medium mb-2">Nenhum cuidador encontrado</h3>
-                    <p>Tente ajustar os filtros de busca</p>
+                    <p>Tente buscar por outro nome</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -594,8 +524,8 @@ const ClienteDashboard = () => {
           </div>
         </div>
 
-        {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+        {/* Estatísticas simples */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
@@ -627,18 +557,6 @@ const ClienteDashboard = () => {
                 <div>
                   <p className="text-2xl font-bold">{favoritos.length}</p>
                   <p className="text-sm text-gray-600">Favoritos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-8 h-8 text-purple-500" />
-                <div>
-                  <p className="text-2xl font-bold">{meusDepoimentos.length}</p>
-                  <p className="text-sm text-gray-600">Avaliações Enviadas</p>
                 </div>
               </div>
             </CardContent>
