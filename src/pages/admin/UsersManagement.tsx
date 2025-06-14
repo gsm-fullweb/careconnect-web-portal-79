@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,8 +68,12 @@ const UsersManagement = () => {
       if (error) {
         throw error;
       }
-      
-      setUsers(data || []);
+      // Convert "possui_filhos" from string to boolean for the local state
+      const mappedData = (data || []).map((user) => ({
+        ...user,
+        possui_filhos: user.possui_filhos === "Sim", // Convert to boolean
+      }));
+      setUsers(mappedData);
       setError(null);
     } catch (error) {
       console.error('Erro ao buscar candidatos:', error);
@@ -142,56 +145,45 @@ const UsersManagement = () => {
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
-    // Handle checkbox inputs separately
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setEditFormData(prev => ({ ...prev, [name]: checked }));
       return;
     }
-    
     setEditFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!selectedUser) return;
-    
     try {
       setLoading(true);
-      
-      // Add updated timestamp
+      // Convert possui_filhos boolean back to string for Supabase
       const updateData = {
         ...editFormData,
-        ultima_atualizacao: new Date().toISOString()
+        possui_filhos: editFormData.possui_filhos ? "Sim" : "Não", // <<<<<
+        ultima_atualizacao: new Date().toISOString(),
       };
-      
       const { error: updateError } = await supabase
         .from('candidatos_cuidadores_rows')
         .update(updateData)
         .eq('id', selectedUser.id);
-        
       if (updateError) throw updateError;
-      
-      // Update local state with edited data
+      // Update state with converted boolean as well
       setUsers(prevUsers => 
         prevUsers.map(user => 
-          user.id === selectedUser.id 
-            ? { ...user, ...updateData } as CandidatoCuidador
+          user.id === selectedUser.id
+            ? { ...user, ...updateData, possui_filhos: updateData.possui_filhos === "Sim" }
             : user
         )
       );
-      
-      // Close modal and reset state
       setIsEditModalOpen(false);
       setSelectedUser(null);
       setEditFormData({});
-      
       toast({
         title: "Candidato atualizado",
         description: "As informações do candidato foram atualizadas com sucesso.",
       });
-      
     } catch (error) {
       console.error("Erro ao atualizar candidato:", error);
       toast({

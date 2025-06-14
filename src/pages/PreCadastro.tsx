@@ -134,7 +134,7 @@ export default function PreCadastro() {
           cidade: '',
           endereco: '',
           cep: '',
-          possui_filhos: false,
+          possui_filhos: "Não", // <-- Explicitly as string here!
           data_cadastro: new Date().toISOString().split('T')[0]
         })
         .select()
