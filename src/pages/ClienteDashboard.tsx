@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Search, MessageSquare, User, Star, MapPin, Phone, LogOut, Heart } from "lucide-react";
+import { Search, MessageSquare, User, Star, MapPin, Phone, LogOut, Heart, Filter } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,11 +18,15 @@ const ClienteDashboard = () => {
   
   // Estados principais
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedCargo, setSelectedCargo] = useState("");
   const [cuidadoresEncontrados, setCuidadoresEncontrados] = useState([]);
   const [cuidadorSelecionado, setCuidadorSelecionado] = useState(null);
   const [buscaRealizada, setBuscaRealizada] = useState(false);
   const [loading, setLoading] = useState(false);
   const [favoritos, setFavoritos] = useState([]);
+  const [availableCities, setAvailableCities] = useState([]);
+  const [availableCargos, setAvailableCargos] = useState([]);
   
   // Estados para depoimentos
   const [novoDepoimento, setNovoDepoimento] = useState({
@@ -37,8 +42,35 @@ const ClienteDashboard = () => {
     if (user) {
       loadMeusDepoimentos();
       loadFavoritos();
+      loadFilterOptions();
     }
   }, [user]);
+
+  const loadFilterOptions = async () => {
+    try {
+      // Carregar cidades únicas
+      const { data: cidadesData } = await supabase
+        .from('candidatos_cuidadores_rows')
+        .select('cidade')
+        .eq('status_candidatura', 'Aprovado')
+        .not('cidade', 'is', null);
+
+      // Carregar cargos únicos
+      const { data: cargosData } = await supabase
+        .from('candidatos_cuidadores_rows')
+        .select('cargo')
+        .eq('status_candidatura', 'Aprovado')
+        .not('cargo', 'is', null);
+
+      const uniqueCities = [...new Set(cidadesData?.map(item => item.cidade).filter(Boolean))].sort();
+      const uniqueCargos = [...new Set(cargosData?.map(item => item.cargo).filter(Boolean))].sort();
+
+      setAvailableCities(uniqueCities);
+      setAvailableCargos(uniqueCargos);
+    } catch (error) {
+      console.error('Erro ao carregar opções de filtro:', error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -55,47 +87,44 @@ const ClienteDashboard = () => {
     
     try {
       console.log('Iniciando busca de cuidadores...');
-      console.log('Termo de busca original:', searchTerm);
+      console.log('Filtros aplicados:', { searchTerm, selectedCity, selectedCargo });
       
       // Normalizar o termo de busca
       const termoNormalizado = searchTerm?.trim().toLowerCase() || '';
-      console.log('Termo normalizado:', termoNormalizado);
       
       let query = supabase
         .from('candidatos_cuidadores_rows')
-        .select('*');
+        .select('*')
+        .eq('status_candidatura', 'Aprovado');
       
-      // Se houver termo de busca, aplicar filtro
+      // Aplicar filtro de nome se houver termo de busca
       if (termoNormalizado) {
         query = query.ilike('nome', `%${termoNormalizado}%`);
+      }
+      
+      // Aplicar filtro de cidade se selecionada
+      if (selectedCity) {
+        query = query.eq('cidade', selectedCity);
+      }
+      
+      // Aplicar filtro de cargo se selecionado
+      if (selectedCargo) {
+        query = query.eq('cargo', selectedCargo);
       }
       
       const { data, error } = await query
         .order('nome')
         .limit(100);
       
-      console.log('Resultado bruto da query:', { data, error, count: data?.length });
+      console.log('Resultado da busca:', { data, error, count: data?.length });
       
       if (error) {
         console.error('Erro na query:', error);
         throw error;
       }
       
-      // Filtrar apenas os aprovados no JavaScript para maior controle
-      const cuidadoresAprovados = (data || []).filter(cuidador => 
-        cuidador.status_candidatura === 'Aprovado'
-      );
-      
-      console.log('Cuidadores aprovados encontrados:', cuidadoresAprovados.length);
-      
       // Mapear os dados para o formato da tabela
-      const cuidadoresFormatados = cuidadoresAprovados.map(cuidador => {
-        console.log('Processando cuidador:', {
-          id: cuidador.id,
-          nome: cuidador.nome,
-          status: cuidador.status_candidatura
-        });
-        
+      const cuidadoresFormatados = (data || []).map(cuidador => {
         return {
           id: cuidador.id,
           nome: cuidador.nome || 'Nome não informado',
@@ -112,9 +141,15 @@ const ClienteDashboard = () => {
       console.log('Cuidadores formatados finais:', cuidadoresFormatados);
       setCuidadoresEncontrados(cuidadoresFormatados);
       
+      const filtrosAplicados = [
+        termoNormalizado && `nome: "${termoNormalizado}"`,
+        selectedCity && `cidade: "${selectedCity}"`,
+        selectedCargo && `cargo: "${selectedCargo}"`
+      ].filter(Boolean).join(', ');
+      
       toast({
         title: "Busca realizada com sucesso",
-        description: `Encontrados ${cuidadoresFormatados.length} cuidador(es)`,
+        description: `Encontrados ${cuidadoresFormatados.length} cuidador(es)${filtrosAplicados ? ` com filtros: ${filtrosAplicados}` : ''}`,
       });
       
     } catch (error) {
@@ -128,6 +163,19 @@ const ClienteDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedCity("");
+    setSelectedCargo("");
+    setCuidadoresEncontrados([]);
+    setBuscaRealizada(false);
+    
+    toast({
+      title: "Filtros limpos",
+      description: "Todos os filtros foram removidos. Faça uma nova busca.",
+    });
   };
 
   const handleWhatsApp = (telefone: string, nome: string) => {
@@ -302,7 +350,7 @@ const ClienteDashboard = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Busca simples */}
+        {/* Busca com filtros */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -310,26 +358,102 @@ const ClienteDashboard = () => {
               Buscar Cuidadores
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex gap-4">
+          <CardContent className="space-y-4">
+            {/* Primeira linha - Nome */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nome do Cuidador
+              </label>
               <Input
                 placeholder="Digite parte do nome (ex: 'ali' para Aline) ou deixe vazio para ver todos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleBuscarCuidadores()}
-                className="flex-1"
               />
+            </div>
+            
+            {/* Segunda linha - Filtros */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cidade
+                </label>
+                <Select value={selectedCity} onValueChange={setSelectedCity}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma cidade" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                    <SelectItem value="">Todas as cidades</SelectItem>
+                    {availableCities.map((city) => (
+                      <SelectItem key={city} value={city}>{city}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cargo/Especialidade
+                </label>
+                <Select value={selectedCargo} onValueChange={setSelectedCargo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cargo" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                    <SelectItem value="">Todos os cargos</SelectItem>
+                    {availableCargos.map((cargo) => (
+                      <SelectItem key={cargo} value={cargo}>{cargo}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            {/* Terceira linha - Botões */}
+            <div className="flex gap-4">
               <Button 
                 onClick={handleBuscarCuidadores}
                 disabled={loading}
-                className="min-w-[120px]"
+                className="flex-1 md:flex-none"
               >
                 <Search className="w-4 h-4 mr-2" />
                 {loading ? "Buscando..." : "Buscar"}
               </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={clearFilters}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Limpar Filtros
+              </Button>
             </div>
-            <p className="text-sm text-gray-500 mt-2">
-              💡 Dica: Digite "ali" para encontrar "Aline" ou deixe vazio para ver todos os cuidadores
+            
+            {/* Filtros aplicados */}
+            {(searchTerm || selectedCity || selectedCargo) && (
+              <div className="flex flex-wrap gap-2 pt-2 border-t">
+                <span className="text-sm text-gray-600">Filtros aplicados:</span>
+                {searchTerm && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                    Nome: {searchTerm}
+                  </span>
+                )}
+                {selectedCity && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    Cidade: {selectedCity}
+                  </span>
+                )}
+                {selectedCargo && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                    Cargo: {selectedCargo}
+                  </span>
+                )}
+              </div>
+            )}
+            
+            <p className="text-sm text-gray-500">
+              💡 Dica: Use os filtros para refinar sua busca ou deixe tudo vazio para ver todos os cuidadores
             </p>
           </CardContent>
         </Card>
@@ -346,13 +470,13 @@ const ClienteDashboard = () => {
                   <div className="text-center py-12 text-gray-500">
                     <Search className="w-16 h-16 mx-auto mb-4 opacity-30" />
                     <h3 className="text-lg font-medium mb-2">Faça sua primeira busca</h3>
-                    <p>Digite o nome de um cuidador ou deixe vazio e clique em "Buscar"</p>
+                    <p>Use os filtros acima e clique em "Buscar"</p>
                   </div>
                 ) : cuidadoresEncontrados.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <User className="w-16 h-16 mx-auto mb-4 opacity-30" />
                     <h3 className="text-lg font-medium mb-2">Nenhum cuidador encontrado</h3>
-                    <p>Tente buscar por outro nome ou deixe vazio para ver todos</p>
+                    <p>Tente ajustar os filtros ou limpar a busca</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
