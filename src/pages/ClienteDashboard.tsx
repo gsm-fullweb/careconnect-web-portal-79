@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,31 +55,47 @@ const ClienteDashboard = () => {
     
     try {
       console.log('Iniciando busca de cuidadores...');
+      console.log('Termo de busca original:', searchTerm);
+      
+      // Normalizar o termo de busca
+      const termoNormalizado = searchTerm?.trim().toLowerCase() || '';
+      console.log('Termo normalizado:', termoNormalizado);
       
       let query = supabase
         .from('candidatos_cuidadores_rows')
-        .select('*')
-        .eq('status_candidatura', 'Aprovado');
+        .select('*');
       
-      // Filtrar por nome se houver termo de busca
-      if (searchTerm && searchTerm.trim()) {
-        const termo = searchTerm.trim().toLowerCase();
-        console.log('Buscando por termo:', termo);
-        query = query.ilike('nome', `%${termo}%`);
+      // Se houver termo de busca, aplicar filtro
+      if (termoNormalizado) {
+        query = query.ilike('nome', `%${termoNormalizado}%`);
       }
       
-      const { data, error } = await query.order('nome').limit(50);
+      const { data, error } = await query
+        .order('nome')
+        .limit(100);
       
-      console.log('Resultado da busca:', { data, error });
+      console.log('Resultado bruto da query:', { data, error, count: data?.length });
       
       if (error) {
         console.error('Erro na query:', error);
         throw error;
       }
       
+      // Filtrar apenas os aprovados no JavaScript para maior controle
+      const cuidadoresAprovados = (data || []).filter(cuidador => 
+        cuidador.status_candidatura === 'Aprovado'
+      );
+      
+      console.log('Cuidadores aprovados encontrados:', cuidadoresAprovados.length);
+      
       // Mapear os dados para o formato da tabela
-      const cuidadoresFormatados = (data || []).map(cuidador => {
-        console.log('Processando cuidador:', cuidador);
+      const cuidadoresFormatados = cuidadoresAprovados.map(cuidador => {
+        console.log('Processando cuidador:', {
+          id: cuidador.id,
+          nome: cuidador.nome,
+          status: cuidador.status_candidatura
+        });
+        
         return {
           id: cuidador.id,
           nome: cuidador.nome || 'Nome não informado',
@@ -94,11 +109,11 @@ const ClienteDashboard = () => {
         };
       });
       
-      console.log('Cuidadores formatados:', cuidadoresFormatados);
+      console.log('Cuidadores formatados finais:', cuidadoresFormatados);
       setCuidadoresEncontrados(cuidadoresFormatados);
       
       toast({
-        title: "Busca realizada",
+        title: "Busca realizada com sucesso",
         description: `Encontrados ${cuidadoresFormatados.length} cuidador(es)`,
       });
       
@@ -298,7 +313,7 @@ const ClienteDashboard = () => {
           <CardContent>
             <div className="flex gap-4">
               <Input
-                placeholder="Digite o nome do cuidador (deixe vazio para ver todos)..."
+                placeholder="Digite parte do nome (ex: 'ali' para Aline) ou deixe vazio para ver todos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleBuscarCuidadores()}
@@ -314,7 +329,7 @@ const ClienteDashboard = () => {
               </Button>
             </div>
             <p className="text-sm text-gray-500 mt-2">
-              Deixe o campo vazio e clique em "Buscar" para ver todos os cuidadores aprovados
+              💡 Dica: Digite "ali" para encontrar "Aline" ou deixe vazio para ver todos os cuidadores
             </p>
           </CardContent>
         </Card>
