@@ -1,120 +1,149 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Edit, Trash, Plus, LinkIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// Sample partners data
-const initialPartners = [
-  {
-    id: 1,
-    name: "HealthPlus Insurance",
-    logo: "https://via.placeholder.com/150x80?text=HealthPlus",
-    website: "https://healthplus.example.com",
-    type: "Insurance",
-    status: "Active"
-  },
-  {
-    id: 2,
-    name: "MediNet",
-    logo: "https://via.placeholder.com/150x80?text=MediNet",
-    website: "https://medinet.example.com",
-    type: "Healthcare Provider",
-    status: "Active"
-  },
-  {
-    id: 3,
-    name: "SeniorLife Foundation",
-    logo: "https://via.placeholder.com/150x80?text=SeniorLife",
-    website: "https://seniorlife.example.com",
-    type: "Non-Profit",
-    status: "Active"
-  },
-  {
-    id: 4,
-    name: "Community Health Alliance",
-    logo: "https://via.placeholder.com/150x80?text=CHA",
-    website: "https://cha.example.com",
-    type: "Community Organization",
-    status: "Active"
-  },
-  {
-    id: 5,
-    name: "CareTrust",
-    logo: "https://via.placeholder.com/150x80?text=CareTrust",
-    website: "https://caretrust.example.com",
-    type: "Healthcare Provider",
-    status: "Inactive"
-  },
-  {
-    id: 6,
-    name: "ElderCare Association",
-    logo: "https://via.placeholder.com/150x80?text=ElderCare",
-    website: "https://eldercare.example.com",
-    type: "Association",
-    status: "Active"
-  }
-];
+interface Partner {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  website_url: string | null;
+  type: string | null;
+  status: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const PartnersManagement = () => {
-  const [partners, setPartners] = useState(initialPartners);
   const [searchTerm, setSearchTerm] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newPartner, setNewPartner] = useState({
     name: "",
-    logo: "https://via.placeholder.com/150x80?text=New",
-    website: "",
+    logo_url: "",
+    website_url: "",
     type: "Healthcare Provider",
-    status: "Active"
+    status: "Active",
+    description: ""
   });
   
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Filter partners based on search term
-  const filteredPartners = partners.filter(partner => 
-    partner.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    partner.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleDeletePartner = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this partner?")) {
-      setPartners(partners.filter(partner => partner.id !== id));
+  // Fetch partners from database
+  const { data: partners = [], isLoading, error } = useQuery({
+    queryKey: ['partners'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('partners')
+        .select('*')
+        .order('created_at', { ascending: false });
       
+      if (error) throw error;
+      return data as Partner[];
+    }
+  });
+
+  // Add partner mutation
+  const addPartnerMutation = useMutation({
+    mutationFn: async (partner: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data, error } = await supabase
+        .from('partners')
+        .insert([partner])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partners'] });
+      setIsAddModalOpen(false);
+      setNewPartner({
+        name: "",
+        logo_url: "",
+        website_url: "",
+        type: "Healthcare Provider",
+        status: "Active",
+        description: ""
+      });
+      toast({
+        title: "Partner added",
+        description: "The new partner has been successfully added.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to add partner. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error adding partner:", error);
+    }
+  });
+
+  // Delete partner mutation
+  const deletePartnerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('partners')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partners'] });
       toast({
         title: "Partner deleted",
         description: "The partner has been successfully deleted.",
       });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete partner. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error deleting partner:", error);
+    }
+  });
+
+  // Filter partners based on search term and filters
+  const filteredPartners = partners.filter(partner => {
+    const matchesSearch = partner.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (partner.type && partner.type.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesType = typeFilter === "all" || partner.type === typeFilter;
+    const matchesStatus = statusFilter === "all" || partner.status === statusFilter;
+    
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  const handleDeletePartner = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this partner?")) {
+      deletePartnerMutation.mutate(id);
     }
   };
 
   const handleAddPartner = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    setPartners([
-      ...partners,
-      {
-        id: partners.length + 1,
-        ...newPartner
-      }
-    ]);
-    
-    setNewPartner({
-      name: "",
-      logo: "https://via.placeholder.com/150x80?text=New",
-      website: "",
-      type: "Healthcare Provider",
-      status: "Active"
-    });
-    
-    setIsAddModalOpen(false);
-    
-    toast({
-      title: "Partner added",
-      description: "The new partner has been successfully added.",
-    });
+    addPartnerMutation.mutate(newPartner);
   };
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500">Error loading partners: {error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -149,24 +178,36 @@ const PartnersManagement = () => {
               />
             </div>
             <div className="flex gap-2">
-              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue">
+              <select 
+                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+              >
                 <option value="all">All Types</option>
-                <option value="insurance">Insurance</option>
-                <option value="healthcare-provider">Healthcare Provider</option>
-                <option value="non-profit">Non-Profit</option>
-                <option value="community-organization">Community Organization</option>
-                <option value="association">Association</option>
+                <option value="Insurance">Insurance</option>
+                <option value="Healthcare Provider">Healthcare Provider</option>
+                <option value="Non-Profit">Non-Profit</option>
+                <option value="Community Organization">Community Organization</option>
+                <option value="Association">Association</option>
               </select>
-              <select className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue">
+              <select 
+                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
                 <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
               </select>
             </div>
           </div>
           
-          {/* Partners Grid */}
-          {filteredPartners.length === 0 ? (
+          {/* Loading State */}
+          {isLoading ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">Loading partners...</p>
+            </div>
+          ) : filteredPartners.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-500">No partners found.</p>
             </div>
@@ -176,26 +217,36 @@ const PartnersManagement = () => {
                 <Card key={partner.id} className="overflow-hidden">
                   <CardContent className="p-6">
                     <div className="h-24 flex items-center justify-center mb-4 bg-gray-100 rounded-md">
-                      <img
-                        src={partner.logo}
-                        alt={partner.name}
-                        className="max-h-16 max-w-full"
-                      />
+                      {partner.logo_url ? (
+                        <img
+                          src={partner.logo_url}
+                          alt={partner.name}
+                          className="max-h-16 max-w-full object-contain"
+                        />
+                      ) : (
+                        <div className="text-gray-400 text-sm">No logo</div>
+                      )}
                     </div>
                     <h3 className="font-semibold text-lg mb-1">{partner.name}</h3>
-                    <p className="text-sm text-gray-500 mb-3">{partner.type}</p>
+                    <p className="text-sm text-gray-500 mb-3">{partner.type || 'No type specified'}</p>
                     
-                    <div className="flex items-center mb-4">
-                      <LinkIcon className="w-4 h-4 text-gray-400 mr-2" />
-                      <a 
-                        href={partner.website} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-careconnect-blue hover:underline truncate"
-                      >
-                        {partner.website}
-                      </a>
-                    </div>
+                    {partner.website_url && (
+                      <div className="flex items-center mb-4">
+                        <LinkIcon className="w-4 h-4 text-gray-400 mr-2" />
+                        <a 
+                          href={partner.website_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-careconnect-blue hover:underline truncate"
+                        >
+                          {partner.website_url}
+                        </a>
+                      </div>
+                    )}
+                    
+                    {partner.description && (
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{partner.description}</p>
+                    )}
                     
                     <div className="flex items-center justify-between">
                       <span className={`px-2 py-1 rounded-full text-xs ${
@@ -203,7 +254,7 @@ const PartnersManagement = () => {
                           ? "bg-green-100 text-green-800" 
                           : "bg-red-100 text-red-800"
                       }`}>
-                        {partner.status}
+                        {partner.status || 'Unknown'}
                       </span>
                       <div className="flex space-x-2">
                         <Button variant="outline" size="sm">
@@ -215,6 +266,7 @@ const PartnersManagement = () => {
                           size="sm" 
                           className="text-red-500 hover:text-red-700"
                           onClick={() => handleDeletePartner(partner.id)}
+                          disabled={deletePartnerMutation.isPending}
                         >
                           <Trash className="w-4 h-4" />
                           <span className="sr-only">Delete</span>
@@ -240,7 +292,7 @@ const PartnersManagement = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Partner Name
+                      Partner Name *
                     </label>
                     <Input
                       required
@@ -250,14 +302,34 @@ const PartnersManagement = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Website
+                      Logo URL
                     </label>
                     <Input
                       type="url"
-                      required
-                      value={newPartner.website}
-                      onChange={(e) => setNewPartner({...newPartner, website: e.target.value})}
+                      value={newPartner.logo_url}
+                      onChange={(e) => setNewPartner({...newPartner, logo_url: e.target.value})}
+                      placeholder="https://example.com/logo.png"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Website URL
+                    </label>
+                    <Input
+                      type="url"
+                      value={newPartner.website_url}
+                      onChange={(e) => setNewPartner({...newPartner, website_url: e.target.value})}
                       placeholder="https://example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <Input
+                      value={newPartner.description}
+                      onChange={(e) => setNewPartner({...newPartner, description: e.target.value})}
+                      placeholder="Brief description of the partner"
                     />
                   </div>
                   <div>
@@ -265,7 +337,7 @@ const PartnersManagement = () => {
                       Partner Type
                     </label>
                     <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
                       value={newPartner.type}
                       onChange={(e) => setNewPartner({...newPartner, type: e.target.value})}
                     >
@@ -281,7 +353,7 @@ const PartnersManagement = () => {
                       Status
                     </label>
                     <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
                       value={newPartner.status}
                       onChange={(e) => setNewPartner({...newPartner, status: e.target.value})}
                     >
@@ -301,8 +373,9 @@ const PartnersManagement = () => {
                   <Button
                     type="submit"
                     className="bg-careconnect-blue hover:bg-careconnect-blue/90"
+                    disabled={addPartnerMutation.isPending}
                   >
-                    Add Partner
+                    {addPartnerMutation.isPending ? 'Adding...' : 'Add Partner'}
                   </Button>
                 </div>
               </form>
