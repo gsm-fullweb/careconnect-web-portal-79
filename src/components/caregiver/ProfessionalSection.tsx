@@ -21,6 +21,29 @@ export const ProfessionalSection: React.FC<ProfessionalSectionProps> = ({
   handleInputChange,
   handleSelectChange,
 }) => {
+  // Função para determinar quais registros profissionais mostrar
+  const getRelevantRegistrations = (cargo: string) => {
+    const registrations = [];
+    
+    if (cargo === "Técnico(a) de Enfermagem" || cargo === "Enfermeiro(a)") {
+      registrations.push("coren");
+    }
+    
+    if (cargo === "Fisioterapeuta" || cargo === "Terapeuta Ocupacional") {
+      registrations.push("crefito");
+    }
+    
+    if (cargo === "Médico(a)") {
+      registrations.push("crm");
+    }
+    
+    return registrations;
+  };
+
+  const currentCargo = editMode ? editFormData.cargo : candidatoData?.cargo;
+  const relevantRegistrations = getRelevantRegistrations(currentCargo || '');
+  const showRegistrationsCard = relevantRegistrations.length > 0;
+
   return (
     <>
       {/* Formação Acadêmica */}
@@ -92,6 +115,7 @@ export const ProfessionalSection: React.FC<ProfessionalSectionProps> = ({
                     <SelectItem value="Enfermeiro(a)">Enfermeiro(a)</SelectItem>
                     <SelectItem value="Fisioterapeuta">Fisioterapeuta</SelectItem>
                     <SelectItem value="Terapeuta Ocupacional">Terapeuta Ocupacional</SelectItem>
+                    <SelectItem value="Médico(a)">Médico(a)</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (
@@ -170,60 +194,68 @@ export const ProfessionalSection: React.FC<ProfessionalSectionProps> = ({
         </CardContent>
       </Card>
 
-      {/* Registros Profissionais */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Award className="w-5 h-5" />
-            Registros Profissionais
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">COREN</label>
-              {editMode ? (
-                <Input 
-                  name="coren"
-                  value={editFormData.coren || ''}
-                  onChange={handleInputChange}
-                  placeholder="Número do COREN"
-                />
-              ) : (
-                <p className="text-gray-900">{candidatoData?.coren || 'Não informado'}</p>
+      {/* Registros Profissionais - Condicional */}
+      {showRegistrationsCard && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5" />
+              Registros Profissionais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {relevantRegistrations.includes("coren") && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">COREN</label>
+                  {editMode ? (
+                    <Input 
+                      name="coren"
+                      value={editFormData.coren || ''}
+                      onChange={handleInputChange}
+                      placeholder="Número do COREN"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{candidatoData?.coren || 'Não informado'}</p>
+                  )}
+                </div>
               )}
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">CREFITO</label>
-              {editMode ? (
-                <Input 
-                  name="crefito"
-                  value={editFormData.crefito || ''}
-                  onChange={handleInputChange}
-                  placeholder="Número do CREFITO"
-                />
-              ) : (
-                <p className="text-gray-900">{candidatoData?.crefito || 'Não informado'}</p>
+              {relevantRegistrations.includes("crefito") && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CREFITO</label>
+                  {editMode ? (
+                    <Input 
+                      name="crefito"
+                      value={editFormData.crefito || ''}
+                      onChange={handleInputChange}
+                      placeholder="Número do CREFITO"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{candidatoData?.crefito || 'Não informado'}</p>
+                  )}
+                </div>
               )}
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">CRM</label>
-              {editMode ? (
-                <Input 
-                  name="crm"
-                  value={editFormData.crm || ''}
-                  onChange={handleInputChange}
-                  placeholder="Número do CRM"
-                />
-              ) : (
-                <p className="text-gray-900">{candidatoData?.crm || 'Não informado'}</p>
+              {relevantRegistrations.includes("crm") && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CRM</label>
+                  {editMode ? (
+                    <Input 
+                      name="crm"
+                      value={editFormData.crm || ''}
+                      onChange={handleInputChange}
+                      placeholder="Número do CRM"
+                    />
+                  ) : (
+                    <p className="text-gray-900">{candidatoData?.crm || 'Não informado'}</p>
+                  )}
+                </div>
               )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 };
