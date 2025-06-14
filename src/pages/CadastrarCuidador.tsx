@@ -347,7 +347,7 @@ export default function CadastrarCuidador() {
         cidade: formData.city,
         endereco: formData.address,
         cep: formData.cep,
-        possui_filhos: formData.hasChildren,
+        possui_filhos: formData.hasChildren ? "Sim" : "Não", // <-- CORRIGIDO aqui
         ultima_atualizacao: new Date().toISOString(),
         status_candidatura: 'Cadastro completo - Em análise',
         cargo: formData.careCategory,
