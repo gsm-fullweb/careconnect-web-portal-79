@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Edit, Trash, UserPlus, Eye, Filter, Users, CheckCircle, XCircle, Clock, Heart } from "lucide-react";
+import { Search, Edit, Trash, UserPlus, Eye, Filter, Users, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -153,6 +153,13 @@ const UsersManagement = () => {
       )
     );
     setIsDetailsModalOpen(false);
+    fetchUsers();
+  };
+
+  const handleCloseModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedUser(null);
+    fetchUsers();
   };
 
   const cargoOptions = Array.from(
@@ -245,6 +252,15 @@ const UsersManagement = () => {
               >
                 <Filter className="w-4 h-4" />
                 Filtros
+              </Button>
+              <Button
+                variant="outline"
+                onClick={fetchUsers}
+                className="flex items-center gap-2"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Atualizar
               </Button>
             </div>
           </div>
@@ -452,7 +468,7 @@ const UsersManagement = () => {
       {selectedUser && (
         <CandidateDetailsModal
           isOpen={isDetailsModalOpen}
-          onClose={() => setIsDetailsModalOpen(false)}
+          onClose={handleCloseModal}
           candidate={selectedUser}
           onUpdate={handleUpdateUser}
         />
