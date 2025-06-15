@@ -14,6 +14,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ReferencesSection } from "@/components/caregiver/ReferencesSection";
 
 type CandidatoCuidador = {
   id: number;
@@ -377,7 +378,6 @@ const UsersManagement = () => {
                     <TableHead className="font-semibold">Localização</TableHead>
                     <TableHead className="font-semibold">Qualificação</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold">Cadastro</TableHead>
                     <TableHead className="font-semibold text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -555,8 +555,8 @@ const UsersManagement = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Fumante:</span>
-                        <Badge variant={selectedUser.fumante === "true" ? "destructive" : "default"}>
-                          {selectedUser.fumante === "true" ? "Sim" : "Não"}
+                        <Badge variant={selectedUser.fumante === "true" || selectedUser.fumante === "Sim" ? "destructive" : "default"}>
+                          {selectedUser.fumante === "true" || selectedUser.fumante === "Sim" ? "Sim" : "Não"}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
@@ -661,49 +661,12 @@ const UsersManagement = () => {
               </div>
               
               <div className="mt-8 pt-6 border-t">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Heart className="w-5 h-5" />
-                      Referências Profissionais
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {selectedUser.referencia_1 && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium text-gray-800">Referência 1:</span>
-                        <p className="text-gray-700 mt-1">{selectedUser.referencia_1}</p>
-                      </div>
-                    )}
-                    
-                    {selectedUser.referencia_2 && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium text-gray-800">Referência 2:</span>
-                        <p className="text-gray-700 mt-1">{selectedUser.referencia_2}</p>
-                      </div>
-                    )}
-                    
-                    {selectedUser.referencia_3 && (
-                      <div className="p-3 bg-gray-50 rounded-lg">
-                        <span className="font-medium text-gray-800">Referência 3:</span>
-                        <p className="text-gray-700 mt-1">{selectedUser.referencia_3}</p>
-                      </div>
-                    )}
-                    
-                    {!selectedUser.referencia_1 && !selectedUser.referencia_2 && !selectedUser.referencia_3 && (
-                      <p className="text-gray-900">Não informado</p>
-                    )}
-                    
-                    {selectedUser.descricao_experiencia && (
-                      <div className="mt-4">
-                        <h4 className="font-medium text-gray-800 mb-2">Descrição da Experiência:</h4>
-                        <p className="text-gray-700 p-3 bg-gray-50 rounded-lg">
-                          {selectedUser.descricao_experiencia}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <ReferencesSection
+                  editMode={false}
+                  candidatoData={selectedUser}
+                  editFormData={selectedUser}
+                  handleInputChange={() => {}}
+                />
               </div>
               
               <div className="mt-8 pt-6 border-t">
