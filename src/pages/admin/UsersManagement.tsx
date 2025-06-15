@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Edit, Trash, UserPlus, Eye, Filter, Users, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
+import { Search, Trash, UserPlus, Eye, Filter, Users, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -479,15 +479,6 @@ const UsersManagement = () => {
                               title="Visualizar detalhes"
                             >
                               <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleViewDetails(user)}
-                              className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
-                              title="Editar candidato"
-                            >
-                              <Edit className="w-4 h-4" />
                             </Button>
                             <Button 
                               variant="ghost" 
