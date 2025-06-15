@@ -74,9 +74,16 @@ const UsersManagement = () => {
     try {
       const { data, error } = await supabase
         .from('candidatos_cuidadores_rows')
-        .select('*');
+        .select(`
+          id, nome, email, telefone, data_cadastro, status_candidatura, cargo, data_nascimento,
+          fumante, possui_filhos, escolaridade, cursos, possui_experiencia, descricao_experiencia,
+          disponibilidade_horarios, disponivel_dormir_local, referencias, referencia_1, referencia_2,
+          referencia_3, perfil_profissional, ultima_atualizacao, cidade, endereco, cep, cpf, RG,
+          estado, coren, crefito, crm
+        `);
       
       if (error) {
+        console.error('Erro ao buscar candidatos:', error);
         throw error;
       }
       setUsers(data || []);
