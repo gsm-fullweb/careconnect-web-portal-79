@@ -14,7 +14,6 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ReferencesSection } from "@/components/caregiver/ReferencesSection";
 
 type CandidatoCuidador = {
   id: number;
