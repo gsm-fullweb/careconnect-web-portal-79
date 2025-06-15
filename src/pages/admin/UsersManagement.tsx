@@ -33,6 +33,9 @@ type CandidatoCuidador = {
   disponibilidade_horarios: string | null;
   disponivel_dormir_local: string;
   referencias: string | null;
+  referencia_1: string | null;
+  referencia_2: string | null;
+  referencia_3: string | null;
   perfil_profissional: string | null;
   ultima_atualizacao: string | null;
   cidade: string;
@@ -651,23 +654,25 @@ const UsersManagement = () => {
                     Referências Profissionais
                   </h3>
                   <div className="space-y-4">
-                    {selectedUser.referencias ? (
-                      (() => {
-                        const references = selectedUser.referencias.split(' | ').filter(ref => ref.trim());
-                        return references.length > 0 ? (
-                          references.map((ref: string, index: number) => (
-                            <div key={index} className="bg-white p-3 rounded-lg border border-pink-200">
-                              <span className="font-medium text-pink-800">Referência {index + 1}:</span>
-                              <p className="text-gray-700 mt-1 text-sm">{ref}</p>
-                            </div>
-                          ))
+                    {[
+                      { label: "Referência 1", value: selectedUser.referencia_1 },
+                      { label: "Referência 2", value: selectedUser.referencia_2 },
+                      { label: "Referência 3", value: selectedUser.referencia_3 }
+                    ].map((ref, index) => (
+                      <div key={index}>
+                        {ref.value ? (
+                          <div className="bg-white p-3 rounded-lg border border-pink-200">
+                            <span className="font-medium text-pink-800">{ref.label}:</span>
+                            <p className="text-gray-700 mt-1 text-sm">{ref.value}</p>
+                          </div>
                         ) : (
-                          <p className="text-gray-500 text-sm">Nenhuma referência informada</p>
-                        );
-                      })()
-                    ) : (
-                      <p className="text-gray-500 text-sm">Nenhuma referência informada</p>
-                    )}
+                          <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
+                            <span className="font-medium text-gray-500">{ref.label}:</span>
+                            <p className="text-gray-500 mt-1 text-sm">Não informado</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
