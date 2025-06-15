@@ -36,6 +36,18 @@ interface Customer {
 }
 
 interface EditCustomerForm {
+  name: string;
+  email: string;
+  whatsapp: string;
+  birth_date: string;
+  cep: string;
+  address: string;
+  city: string;
+  state: string;
+  has_children: boolean;
+  smoker: boolean;
+  necessity: string;
+  special_care: string;
   observations: string;
   status: string;
 }
@@ -183,6 +195,18 @@ const CustomersManagement = () => {
   const handleEditCustomer = (customer: Customer) => {
     setEditingCustomer(customer);
     form.reset({
+      name: customer.name || "",
+      email: customer.email || "",
+      whatsapp: customer.whatsapp || "",
+      birth_date: customer.birth_date || "",
+      cep: customer.cep || "",
+      address: customer.address || "",
+      city: customer.city || "",
+      state: customer.state || "",
+      has_children: customer.has_children || false,
+      smoker: customer.smoker || false,
+      necessity: customer.necessity || "",
+      special_care: customer.special_care || "",
       observations: customer.observations || "",
       status: customer.status || "pending",
     });
@@ -194,7 +218,19 @@ const CustomersManagement = () => {
     updateCustomerMutation.mutate({
       id: editingCustomer.id,
       data: {
-        observations: data.observations,
+        name: data.name,
+        email: data.email,
+        whatsapp: data.whatsapp || null,
+        birth_date: data.birth_date || null,
+        cep: data.cep || null,
+        address: data.address || null,
+        city: data.city,
+        state: data.state || null,
+        has_children: data.has_children,
+        smoker: data.smoker,
+        necessity: data.necessity || null,
+        special_care: data.special_care || null,
+        observations: data.observations || null,
         status: data.status,
       },
     });
@@ -337,6 +373,7 @@ const CustomersManagement = () => {
                   <TableCell>{formatDate(customer.created_at)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      {/* View Dialog */}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -353,78 +390,260 @@ const CustomersManagement = () => {
                           </DialogHeader>
                           {selectedCustomer && (
                             <div className="space-y-6">
-                              <Tabs defaultValue="personal">
-                                <TabsList>
+                              {/* Tabs for viewing customer details */}
+                              <Tabs defaultValue="personal" className="w-full">
+                                <TabsList className="grid w-full grid-cols-4">
                                   <TabsTrigger value="personal">Pessoal</TabsTrigger>
                                   <TabsTrigger value="contact">Contato</TabsTrigger>
                                   <TabsTrigger value="care">Cuidados</TabsTrigger>
-                                  <TabsTrigger value="observations">Observações</TabsTrigger>
+                                  <TabsTrigger value="admin">Admin</TabsTrigger>
                                 </TabsList>
                                 
                                 <TabsContent value="personal" className="space-y-4">
                                   <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-sm font-medium">Nome</label>
-                                      <p className="text-sm text-gray-600">{selectedCustomer.name}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium">Idade</label>
-                                      <p className="text-sm text-gray-600">{calculateAge(selectedCustomer.birth_date)} anos</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium">Filhos</label>
-                                      <p className="text-sm text-gray-600">{selectedCustomer.has_children ? "Sim" : "Não"}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium">Fumante</label>
-                                      <p className="text-sm text-gray-600">{selectedCustomer.smoker ? "Sim" : "Não"}</p>
-                                    </div>
+                                    <FormField
+                                      control={form.control}
+                                      name="name"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Nome *</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="Nome completo" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="birth_date"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Data de Nascimento</FormLabel>
+                                          <FormControl>
+                                            <Input type="date" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="has_children"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Possui Filhos</FormLabel>
+                                          <Select onValueChange={(value) => field.onChange(value === "true")} value={field.value ? "true" : "false"}>
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              <SelectItem value="false">Não</SelectItem>
+                                              <SelectItem value="true">Sim</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="smoker"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Fumante</FormLabel>
+                                          <Select onValueChange={(value) => field.onChange(value === "true")} value={field.value ? "true" : "false"}>
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              <SelectItem value="false">Não</SelectItem>
+                                              <SelectItem value="true">Sim</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
                                   </div>
                                 </TabsContent>
                                 
                                 <TabsContent value="contact" className="space-y-4">
-                                  <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                      <Mail className="w-4 h-4 text-gray-500" />
-                                      <span>{selectedCustomer.email}</span>
-                                    </div>
-                                    {selectedCustomer.whatsapp && (
-                                      <div className="flex items-center gap-2">
-                                        <Phone className="w-4 h-4 text-gray-500" />
-                                        <span>{selectedCustomer.whatsapp}</span>
-                                      </div>
+                                  <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Email *</FormLabel>
+                                        <FormControl>
+                                          <Input type="email" placeholder="email@exemplo.com" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
                                     )}
-                                    <div className="flex items-center gap-2">
-                                      <MapPin className="w-4 h-4 text-gray-500" />
-                                      <span>
-                                        {selectedCustomer.address}, {selectedCustomer.city}
-                                        {selectedCustomer.state && `, ${selectedCustomer.state}`}
-                                        {selectedCustomer.cep && ` - ${selectedCustomer.cep}`}
-                                      </span>
-                                    </div>
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="whatsapp"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>WhatsApp</FormLabel>
+                                        <FormControl>
+                                          <Input placeholder="(11) 99999-9999" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="cep"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>CEP</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="00000-000" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="city"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Cidade *</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="Cidade" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="state"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Estado</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="SP" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
                                   </div>
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Endereço</FormLabel>
+                                        <FormControl>
+                                          <Input placeholder="Rua, número, complemento" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
                                 </TabsContent>
                                 
                                 <TabsContent value="care" className="space-y-4">
-                                  <div className="space-y-3">
-                                    <div>
-                                      <label className="text-sm font-medium">Necessidade</label>
-                                      <p className="text-sm text-gray-600">{selectedCustomer.necessity || "Não informado"}</p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium">Cuidados Especiais</label>
-                                      <p className="text-sm text-gray-600">{selectedCustomer.special_care || "Não informado"}</p>
-                                    </div>
-                                  </div>
+                                  <FormField
+                                    control={form.control}
+                                    name="necessity"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Necessidade</FormLabel>
+                                        <FormControl>
+                                          <Textarea 
+                                            placeholder="Descreva a necessidade de cuidado..."
+                                            className="min-h-[100px]"
+                                            {...field} 
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="special_care"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Cuidados Especiais</FormLabel>
+                                        <FormControl>
+                                          <Textarea 
+                                            placeholder="Descreva cuidados especiais necessários..."
+                                            className="min-h-[100px]"
+                                            {...field} 
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
                                 </TabsContent>
                                 
-                                <TabsContent value="observations" className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium">Observações</label>
-                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                                      {selectedCustomer.observations || "Nenhuma observação registrada"}
-                                    </p>
-                                  </div>
+                                <TabsContent value="admin" className="space-y-4">
+                                  <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Status</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                          <FormControl>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Selecione o status" />
+                                            </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                            <SelectItem value="pending">Pendente</SelectItem>
+                                            <SelectItem value="active">Ativo</SelectItem>
+                                            <SelectItem value="blocked">Bloqueado</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="observations"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Observações Administrativas</FormLabel>
+                                        <FormControl>
+                                          <Textarea
+                                            placeholder="Adicione observações internas sobre o cliente..."
+                                            className="min-h-[120px]"
+                                            {...field}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
                                 </TabsContent>
                               </Tabs>
                               
@@ -453,6 +672,7 @@ const CustomersManagement = () => {
                         </DialogContent>
                       </Dialog>
                       
+                      {/* Edit Dialog */}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -463,54 +683,269 @@ const CustomersManagement = () => {
                             <Edit className="w-4 h-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Editar Cliente - {customer.name}</DialogTitle>
                           </DialogHeader>
                           <Form {...form}>
-                            <form onSubmit={form.handleSubmit(handleSaveCustomer)} className="space-y-4">
-                              <FormField
-                                control={form.control}
-                                name="status"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Status</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Selecione o status" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="pending">Pendente</SelectItem>
-                                        <SelectItem value="active">Ativo</SelectItem>
-                                        <SelectItem value="blocked">Bloqueado</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+                            <form onSubmit={form.handleSubmit(handleSaveCustomer)} className="space-y-6">
+                              <Tabs defaultValue="personal" className="w-full">
+                                <TabsList className="grid w-full grid-cols-4">
+                                  <TabsTrigger value="personal">Pessoal</TabsTrigger>
+                                  <TabsTrigger value="contact">Contato</TabsTrigger>
+                                  <TabsTrigger value="care">Cuidados</TabsTrigger>
+                                  <TabsTrigger value="admin">Admin</TabsTrigger>
+                                </TabsList>
+                                
+                                <TabsContent value="personal" className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="name"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Nome *</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="Nome completo" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="birth_date"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Data de Nascimento</FormLabel>
+                                          <FormControl>
+                                            <Input type="date" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="has_children"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Possui Filhos</FormLabel>
+                                          <Select onValueChange={(value) => field.onChange(value === "true")} value={field.value ? "true" : "false"}>
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              <SelectItem value="false">Não</SelectItem>
+                                              <SelectItem value="true">Sim</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="smoker"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Fumante</FormLabel>
+                                          <Select onValueChange={(value) => field.onChange(value === "true")} value={field.value ? "true" : "false"}>
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              <SelectItem value="false">Não</SelectItem>
+                                              <SelectItem value="true">Sim</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </TabsContent>
+                                
+                                <TabsContent value="contact" className="space-y-4">
+                                  <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Email *</FormLabel>
+                                        <FormControl>
+                                          <Input type="email" placeholder="email@exemplo.com" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="whatsapp"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>WhatsApp</FormLabel>
+                                        <FormControl>
+                                          <Input placeholder="(11) 99999-9999" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="cep"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>CEP</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="00000-000" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="city"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Cidade *</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="Cidade" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name="state"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Estado</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="SP" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Endereço</FormLabel>
+                                        <FormControl>
+                                          <Input placeholder="Rua, número, complemento" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </TabsContent>
+                                
+                                <TabsContent value="care" className="space-y-4">
+                                  <FormField
+                                    control={form.control}
+                                    name="necessity"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Necessidade</FormLabel>
+                                        <FormControl>
+                                          <Textarea 
+                                            placeholder="Descreva a necessidade de cuidado..."
+                                            className="min-h-[100px]"
+                                            {...field} 
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="special_care"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Cuidados Especiais</FormLabel>
+                                        <FormControl>
+                                          <Textarea 
+                                            placeholder="Descreva cuidados especiais necessários..."
+                                            className="min-h-[100px]"
+                                            {...field} 
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </TabsContent>
+                                
+                                <TabsContent value="admin" className="space-y-4">
+                                  <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Status</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                          <FormControl>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Selecione o status" />
+                                            </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                            <SelectItem value="pending">Pendente</SelectItem>
+                                            <SelectItem value="active">Ativo</SelectItem>
+                                            <SelectItem value="blocked">Bloqueado</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name="observations"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Observações Administrativas</FormLabel>
+                                        <FormControl>
+                                          <Textarea
+                                            placeholder="Adicione observações internas sobre o cliente..."
+                                            className="min-h-[120px]"
+                                            {...field}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </TabsContent>
+                              </Tabs>
                               
-                              <FormField
-                                control={form.control}
-                                name="observations"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Observações</FormLabel>
-                                    <FormControl>
-                                      <Textarea
-                                        placeholder="Adicione observações sobre o cliente..."
-                                        className="min-h-[120px]"
-                                        {...field}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <div className="flex gap-2 pt-4">
+                              <div className="flex gap-2 pt-4 border-t">
                                 <Button
                                   type="button"
                                   variant="outline"
@@ -524,7 +959,7 @@ const CustomersManagement = () => {
                                   className="flex-1"
                                   disabled={updateCustomerMutation.isPending}
                                 >
-                                  {updateCustomerMutation.isPending ? "Salvando..." : "Salvar"}
+                                  {updateCustomerMutation.isPending ? "Salvando..." : "Salvar Alterações"}
                                 </Button>
                               </div>
                             </form>
@@ -532,25 +967,7 @@ const CustomersManagement = () => {
                         </DialogContent>
                       </Dialog>
                       
-                      {customer.status !== "active" ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusChange(customer.id, "active")}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          <Unlock className="w-4 h-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusChange(customer.id, "blocked")}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Lock className="w-4 h-4" />
-                        </Button>
-                      )}
+                      {/* ... keep existing code (status change buttons) */}
                     </div>
                   </TableCell>
                 </TableRow>
