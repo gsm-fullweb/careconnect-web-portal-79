@@ -230,6 +230,13 @@ const UsersManagement = () => {
     }
   };
 
+  // Helper function to convert boolean values to Portuguese
+  const formatBooleanValue = (value: boolean | string | null): string => {
+    if (value === true || value === "true" || value === "Sim") return "Sim";
+    if (value === false || value === "false" || value === "Não") return "Não";
+    return String(value || "Não informado");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
@@ -553,7 +560,7 @@ const UsersManagement = () => {
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Possui Filhos:</span>
                         <Badge variant={selectedUser.possui_filhos ? "default" : "secondary"}>
-                          {selectedUser.possui_filhos ? 'Sim' : 'Não'}
+                          {formatBooleanValue(selectedUser.possui_filhos)}
                         </Badge>
                       </div>
                     </div>
@@ -623,7 +630,7 @@ const UsersManagement = () => {
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Horários:</span>
-                        <span className="text-gray-900">{selectedUser.disponibilidade_horarios || "Não informado"}</span>
+                        <span className="text-gray-900">{formatBooleanValue(selectedUser.disponibilidade_horarios)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Dormir no Local:</span>
