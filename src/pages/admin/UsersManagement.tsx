@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Edit, Trash, UserPlus, Eye, Filter, Users, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Search, Edit, Trash, UserPlus, Eye, Filter, Users, CheckCircle, XCircle, Clock, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -163,7 +163,7 @@ const UsersManagement = () => {
       // Convert possui_filhos boolean back to string for Supabase
       const updateData = {
         ...editFormData,
-        possui_filhos: editFormData.possui_filhos ? "Sim" : "Não", // <<<<<
+        possui_filhos: editFormData.possui_filhos ? "Sim" : "Não",
         ultima_atualizacao: new Date().toISOString(),
       };
       const { error: updateError } = await supabase
@@ -643,6 +643,35 @@ const UsersManagement = () => {
                 </div>
               </div>
               
+              {/* References Section */}
+              <div className="mt-8 pt-6 border-t">
+                <div className="bg-pink-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-pink-900 mb-3 flex items-center gap-2">
+                    <Heart className="w-5 h-5" />
+                    Referências Profissionais
+                  </h3>
+                  <div className="space-y-4">
+                    {selectedUser.referencias ? (
+                      (() => {
+                        const references = selectedUser.referencias.split(' | ').filter(ref => ref.trim());
+                        return references.length > 0 ? (
+                          references.map((ref: string, index: number) => (
+                            <div key={index} className="bg-white p-3 rounded-lg border border-pink-200">
+                              <span className="font-medium text-pink-800">Referência {index + 1}:</span>
+                              <p className="text-gray-700 mt-1 text-sm">{ref}</p>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-gray-500 text-sm">Nenhuma referência informada</p>
+                        );
+                      })()
+                    ) : (
+                      <p className="text-gray-500 text-sm">Nenhuma referência informada</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
               {/* Additional Information */}
               <div className="mt-8 pt-6 border-t">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -679,25 +708,12 @@ const UsersManagement = () => {
                     </div>
                   </div>
                   
-                  {(selectedUser.referencias || selectedUser.perfil_profissional) && (
+                  {selectedUser.perfil_profissional && (
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-gray-900 mb-3">Informações Adicionais</h3>
-                      {selectedUser.perfil_profissional && (
-                        <div className="mb-3">
-                          <span className="font-medium text-gray-700 block mb-1">Perfil Profissional:</span>
-                          <p className="text-gray-900 bg-white p-2 rounded border text-xs">
-                            {selectedUser.perfil_profissional}
-                          </p>
-                        </div>
-                      )}
-                      {selectedUser.referencias && (
-                        <div>
-                          <span className="font-medium text-gray-700 block mb-1">Referências:</span>
-                          <p className="text-gray-900 bg-white p-2 rounded border text-xs">
-                            {selectedUser.referencias}
-                          </p>
-                        </div>
-                      )}
+                      <h3 className="font-semibold text-gray-900 mb-3">Perfil Profissional</h3>
+                      <p className="text-gray-900 bg-white p-2 rounded border text-xs">
+                        {selectedUser.perfil_profissional}
+                      </p>
                     </div>
                   )}
                 </div>
