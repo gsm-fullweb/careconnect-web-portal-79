@@ -1,17 +1,19 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Eye, Lock, Unlock, Filter, Calendar, Phone, Mail, MapPin } from "lucide-react";
+import { Search, Eye, Lock, Unlock, Filter, Calendar, Phone, Mail, MapPin, Edit } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 interface Customer {
   id: string;
@@ -27,17 +29,26 @@ interface Customer {
   smoker: boolean | null;
   necessity: string | null;
   special_care: string | null;
+  observations: string | null;
   status: string | null;
   created_at: string;
   updated_at: string;
+}
+
+interface EditCustomerForm {
+  observations: string;
+  status: string;
 }
 
 const CustomersManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const form = useForm<EditCustomerForm>();
 
   // Fetch customers
   const { data: customers = [], isLoading } = useQuery({
@@ -54,6 +65,35 @@ const CustomersManagement = () => {
       }
 
       return data as Customer[];
+    },
+  });
+
+  // Update customer
+  const updateCustomerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Customer> }) => {
+      const { error } = await supabase
+        .from("customer")
+        .update({ ...data, updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast({
+        title: "Cliente atualizado",
+        description: "As informações do cliente foram atualizadas com sucesso.",
+      });
+      setEditingCustomer(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o cliente.",
+        variant: "destructive",
+      });
+      console.error("Error updating customer:", error);
     },
   });
 
@@ -139,6 +179,26 @@ const CustomersManagement = () => {
   };
 
   const stats = getCustomerStats();
+
+  const handleEditCustomer = (customer: Customer) => {
+    setEditingCustomer(customer);
+    form.reset({
+      observations: customer.observations || "",
+      status: customer.status || "pending",
+    });
+  };
+
+  const handleSaveCustomer = (data: EditCustomerForm) => {
+    if (!editingCustomer) return;
+    
+    updateCustomerMutation.mutate({
+      id: editingCustomer.id,
+      data: {
+        observations: data.observations,
+        status: data.status,
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -298,6 +358,7 @@ const CustomersManagement = () => {
                                   <TabsTrigger value="personal">Pessoal</TabsTrigger>
                                   <TabsTrigger value="contact">Contato</TabsTrigger>
                                   <TabsTrigger value="care">Cuidados</TabsTrigger>
+                                  <TabsTrigger value="observations">Observações</TabsTrigger>
                                 </TabsList>
                                 
                                 <TabsContent value="personal" className="space-y-4">
@@ -356,6 +417,15 @@ const CustomersManagement = () => {
                                     </div>
                                   </div>
                                 </TabsContent>
+                                
+                                <TabsContent value="observations" className="space-y-4">
+                                  <div>
+                                    <label className="text-sm font-medium">Observações</label>
+                                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                                      {selectedCustomer.observations || "Nenhuma observação registrada"}
+                                    </p>
+                                  </div>
+                                </TabsContent>
                               </Tabs>
                               
                               <div className="flex gap-2 pt-4 border-t">
@@ -380,6 +450,85 @@ const CustomersManagement = () => {
                               </div>
                             </div>
                           )}
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCustomer(customer)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Editar Cliente - {customer.name}</DialogTitle>
+                          </DialogHeader>
+                          <Form {...form}>
+                            <form onSubmit={form.handleSubmit(handleSaveCustomer)} className="space-y-4">
+                              <FormField
+                                control={form.control}
+                                name="status"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Status</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione o status" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Pendente</SelectItem>
+                                        <SelectItem value="active">Ativo</SelectItem>
+                                        <SelectItem value="blocked">Bloqueado</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="observations"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Observações</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        placeholder="Adicione observações sobre o cliente..."
+                                        className="min-h-[120px]"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <div className="flex gap-2 pt-4">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="flex-1"
+                                  onClick={() => setEditingCustomer(null)}
+                                >
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  className="flex-1"
+                                  disabled={updateCustomerMutation.isPending}
+                                >
+                                  {updateCustomerMutation.isPending ? "Salvando..." : "Salvar"}
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
                         </DialogContent>
                       </Dialog>
                       

@@ -206,6 +206,7 @@ export type Database = {
           id: string
           name: string
           necessity: string | null
+          observations: string | null
           smoker: boolean | null
           special_care: string | null
           state: string | null
@@ -225,6 +226,7 @@ export type Database = {
           id?: string
           name: string
           necessity?: string | null
+          observations?: string | null
           smoker?: boolean | null
           special_care?: string | null
           state?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           id?: string
           name?: string
           necessity?: string | null
+          observations?: string | null
           smoker?: boolean | null
           special_care?: string | null
           state?: string | null
