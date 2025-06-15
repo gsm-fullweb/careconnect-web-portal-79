@@ -378,6 +378,7 @@ const UsersManagement = () => {
                     <TableHead className="font-semibold">Localização</TableHead>
                     <TableHead className="font-semibold">Qualificação</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Cadastro</TableHead>
                     <TableHead className="font-semibold text-center">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -522,6 +523,7 @@ const UsersManagement = () => {
             <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(85vh - 100px)' }}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-6">
+                  {/* Informações Pessoais */}
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
                       <Users className="w-5 h-5" />
@@ -555,19 +557,20 @@ const UsersManagement = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Fumante:</span>
-                        <Badge variant={selectedUser.fumante === "true" || selectedUser.fumante === "Sim" ? "destructive" : "default"}>
+                         <Badge variant={selectedUser.fumante === "true" || selectedUser.fumante === "Sim" ? "destructive" : "secondary"}>
                           {selectedUser.fumante === "true" || selectedUser.fumante === "Sim" ? "Sim" : "Não"}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Possui Filhos:</span>
                         <Badge variant={selectedUser.possui_filhos === "Sim" ? "default" : "secondary"}>
-                          {selectedUser.possui_filhos}
+                          {selectedUser.possui_filhos || 'Não informado'}
                         </Badge>
                       </div>
                     </div>
                   </div>
                   
+                  {/* Endereço */}
                   <div className="bg-green-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-green-900 mb-3">Endereço</h3>
                     <div className="space-y-3 text-sm">
@@ -592,20 +595,46 @@ const UsersManagement = () => {
                 </div>
                 
                 <div className="space-y-6">
+                  {/* Formação Acadêmica */}
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-purple-900 mb-3">Qualificações</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
+                    <h3 className="font-semibold text-purple-900 mb-3">Formação Acadêmica</h3>
+                     <div className="space-y-3 text-sm">
+                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Escolaridade:</span>
                         <span className="text-gray-900">{selectedUser.escolaridade}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div>
                         <span className="font-medium text-gray-700">Cursos:</span>
-                        <span className="text-gray-900">{selectedUser.cursos || "Não informado"}</span>
+                        <p className="text-gray-900 bg-white p-2 rounded border text-xs mt-1">
+                          {selectedUser.cursos || "Não informado"}
+                        </p>
+                      </div>
+                     </div>
+                  </div>
+                  
+                  {/* Informações Profissionais */}
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-orange-900 mb-3">Informações Profissionais</h3>
+                    <div className="space-y-3 text-sm">
+                       <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">Categoria Profissional:</span>
+                        <span className="text-gray-900">{selectedUser.cargo || "Não informado"}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium text-gray-700">Cargo:</span>
-                        <span className="text-gray-900">{selectedUser.cargo || "Não informado"}</span>
+                        <span className="font-medium text-gray-700">Possui Experiência:</span>
+                        <Badge variant={selectedUser.possui_experiencia === "Sim" ? "default" : "secondary"}>
+                          {selectedUser.possui_experiencia}
+                        </Badge>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">Disponibilidade:</span>
+                        <span className="text-gray-900">{selectedUser.disponibilidade_horarios || "Não informado"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">Dormir no Local:</span>
+                        <Badge variant={selectedUser.disponivel_dormir_local === "Sim" ? "default" : "secondary"}>
+                          {selectedUser.disponivel_dormir_local}
+                        </Badge>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">COREN:</span>
@@ -621,97 +650,73 @@ const UsersManagement = () => {
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="bg-orange-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-orange-900 mb-3">Experiência</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-700">Possui Experiência:</span>
-                        <Badge variant={selectedUser.possui_experiencia === "Sim" ? "default" : "secondary"}>
-                          {selectedUser.possui_experiencia}
-                        </Badge>
-                      </div>
-                      {selectedUser.descricao_experiencia && (
+                </div>
+              </div>
+
+              {/* Referências Profissionais */}
+              <div className="mt-8 pt-6 border-t">
+                 <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <Heart className="w-5 h-5 text-careconnect-blue" />
+                        Referências e Experiência
+                    </h3>
+                    <div className="space-y-4">
                         <div>
-                          <span className="font-medium text-gray-700 block mb-1">Descrição:</span>
-                          <p className="text-gray-900 bg-white p-2 rounded border text-xs">
-                            {selectedUser.descricao_experiencia}
-                          </p>
+                            <h4 className="font-medium text-gray-700 mb-2">Referências:</h4>
+                            <div className="space-y-2 text-sm">
+                                <p><span className="font-semibold">1:</span> {selectedUser.referencia_1 || 'Não informada'}</p>
+                                <p><span className="font-semibold">2:</span> {selectedUser.referencia_2 || 'Não informada'}</p>
+                                <p><span className="font-semibold">3:</span> {selectedUser.referencia_3 || 'Não informada'}</p>
+                            </div>
                         </div>
-                      )}
+                        <div>
+                            <h4 className="font-medium text-gray-700 mb-2">Descrição da Experiência:</h4>
+                            <p className="text-gray-800 text-sm bg-white p-2 border rounded">
+                                {selectedUser.descricao_experiencia || 'Não informada'}
+                            </p>
+                        </div>
+                         <div>
+                            <h4 className="font-medium text-gray-700 mb-2">Perfil Profissional:</h4>
+                            <p className="text-gray-800 text-sm bg-white p-2 border rounded">
+                                {selectedUser.perfil_profissional || 'Não informado'}
+                            </p>
+                        </div>
                     </div>
-                  </div>
-                  
-                  <div className="bg-indigo-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-indigo-900 mb-3">Disponibilidade</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-700">Horários:</span>
-                        <span className="text-gray-900">{selectedUser.disponibilidade_horarios || "Não informado"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-700">Dormir no Local:</span>
-                        <Badge variant={selectedUser.disponivel_dormir_local === "Sim" ? "default" : "secondary"}>
-                          {selectedUser.disponivel_dormir_local}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
               
               <div className="mt-8 pt-6 border-t">
-                <ReferencesSection
-                  editMode={false}
-                  candidatoData={selectedUser}
-                  editFormData={selectedUser}
-                  handleInputChange={() => {}}
-                />
-              </div>
-              
-              <div className="mt-8 pt-6 border-t">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="font-semibold text-gray-900 mb-3">Status da Candidatura</h3>
-                    <div className="flex items-center gap-3 mb-3">
-                      <Badge 
-                        variant={getStatusVariant(selectedUser.status_candidatura)}
-                        className="flex items-center gap-1"
-                      >
-                        {getStatusIcon(selectedUser.status_candidatura)}
-                        {selectedUser.status_candidatura}
-                      </Badge>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3">Status da Candidatura</h3>
+                  <div className="flex items-center gap-3 mb-3">
+                    <Badge 
+                      variant={getStatusVariant(selectedUser.status_candidatura)}
+                      className="flex items-center gap-1"
+                    >
+                      {getStatusIcon(selectedUser.status_candidatura)}
+                      {selectedUser.status_candidatura}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-700">Cadastro:</span>
+                      <span className="text-gray-900">
+                        {selectedUser.data_cadastro ? 
+                          new Date(selectedUser.data_cadastro).toLocaleDateString('pt-BR') : 
+                          "N/A"
+                        }
+                      </span>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-700">Cadastro:</span>
-                        <span className="text-gray-900">
-                          {selectedUser.data_cadastro ? 
-                            new Date(selectedUser.data_cadastro).toLocaleDateString('pt-BR') : 
-                            "N/A"
-                          }
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-gray-700">Última Atualização:</span>
-                        <span className="text-gray-900">
-                          {selectedUser.ultima_atualizacao ? 
-                            new Date(selectedUser.ultima_atualizacao).toLocaleDateString('pt-BR') : 
-                            "Não houve atualização"
-                          }
-                        </span>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-700">Última Atualização:</span>
+                      <span className="text-gray-900">
+                        {selectedUser.ultima_atualizacao ? 
+                          new Date(selectedUser.ultima_atualizacao).toLocaleDateString('pt-BR') : 
+                          "Não houve atualização"
+                        }
+                      </span>
                     </div>
                   </div>
-                  
-                  {selectedUser.perfil_profissional && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-gray-900 mb-3">Perfil Profissional</h3>
-                      <p className="text-gray-900 bg-white p-2 rounded border text-xs">
-                        {selectedUser.perfil_profissional}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
