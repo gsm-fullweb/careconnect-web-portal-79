@@ -14,6 +14,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ReferencesSection } from "@/components/caregiver/ReferencesSection";
 
 type CandidatoCuidador = {
   id: number;
@@ -238,6 +239,20 @@ const UsersManagement = () => {
     if (value === true || value === "true" || value === "Sim") return "Sim";
     if (value === false || value === "false" || value === "Não") return "Não";
     return String(value || "Não informado");
+  };
+
+  // Create candidatoData object for ReferencesSection component
+  const createCandidatoData = (user: CandidatoCuidador) => {
+    // Combine individual references into the format expected by ReferencesSection
+    const referencias = [user.referencia_1, user.referencia_2, user.referencia_3]
+      .filter(ref => ref && ref.trim() !== '')
+      .join(' | ');
+    
+    return {
+      ...user,
+      referencias: referencias || null,
+      descricao_experiencia: user.descricao_experiencia
+    };
   };
 
   return (
@@ -552,7 +567,7 @@ const UsersManagement = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Data de Nascimento:</span>
-                        <span className="text-gray-900">{selectedUser.data_nascimento}</span>
+                        <span className="text-gray-900">{selectedUser.data_nascimento || "Não informado"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Fumante:</span>
@@ -633,7 +648,7 @@ const UsersManagement = () => {
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Horários:</span>
-                        <span className="text-gray-900">{formatBooleanValue(selectedUser.disponibilidade_horarios)}</span>
+                        <span className="text-gray-900">{selectedUser.disponibilidade_horarios || "Não informado"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Dormir no Local:</span>
@@ -646,35 +661,14 @@ const UsersManagement = () => {
                 </div>
               </div>
               
-              {/* References Section */}
+              {/* References Section using the ReferencesSection component */}
               <div className="mt-8 pt-6 border-t">
-                <div className="bg-pink-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-pink-900 mb-3 flex items-center gap-2">
-                    <Heart className="w-5 h-5" />
-                    Referências Profissionais
-                  </h3>
-                  <div className="space-y-4">
-                    {[
-                      { label: "Referência 1", value: selectedUser.referencia_1 },
-                      { label: "Referência 2", value: selectedUser.referencia_2 },
-                      { label: "Referência 3", value: selectedUser.referencia_3 }
-                    ].map((ref, index) => (
-                      <div key={index}>
-                        {ref.value ? (
-                          <div className="bg-white p-3 rounded-lg border border-pink-200">
-                            <span className="font-medium text-pink-800">{ref.label}:</span>
-                            <p className="text-gray-700 mt-1 text-sm">{ref.value}</p>
-                          </div>
-                        ) : (
-                          <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
-                            <span className="font-medium text-gray-500">{ref.label}:</span>
-                            <p className="text-gray-500 mt-1 text-sm">Não informado</p>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <ReferencesSection
+                  editMode={false}
+                  candidatoData={createCandidatoData(selectedUser)}
+                  editFormData={{}}
+                  handleInputChange={() => {}}
+                />
               </div>
               
               {/* Additional Information */}
@@ -928,13 +922,29 @@ const UsersManagement = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Referências</label>
-                      <textarea 
-                        name="referencias"
-                        value={editFormData.referencias || ''}
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Referência 1</label>
+                      <Input 
+                        name="referencia_1"
+                        value={editFormData.referencia_1 || ''}
                         onChange={handleEditInputChange}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
-                        rows={2}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Referência 2</label>
+                      <Input 
+                        name="referencia_2"
+                        value={editFormData.referencia_2 || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Referência 3</label>
+                      <Input 
+                        name="referencia_3"
+                        value={editFormData.referencia_3 || ''}
+                        onChange={handleEditInputChange}
                       />
                     </div>
                     
