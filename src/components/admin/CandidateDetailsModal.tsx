@@ -8,14 +8,10 @@ import {
   User, 
   Mail, 
   Phone, 
-  MapPin, 
-  Calendar, 
-  GraduationCap, 
   Briefcase, 
-  Heart, 
-  FileText,
-  Home,
-  Users,
+  GraduationCap, 
+  Heart,
+  Award,
   CheckCircle,
   XCircle,
   Clock
@@ -57,15 +53,29 @@ export const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
     }
   };
 
-  const formatBooleanValue = (value: boolean | string | null): string => {
-    if (value === true || value === "true" || value === "Sim") return "Sim";
-    if (value === false || value === "false" || value === "Não") return "Não";
-    return String(value || "Não informado");
+  const getRelevantRegistrations = (cargo: string) => {
+    const registrations = [];
+    
+    if (cargo === "Técnico(a) de Enfermagem" || cargo === "Enfermeiro(a)") {
+      registrations.push({ type: "COREN", value: candidate.coren });
+    }
+    
+    if (cargo === "Fisioterapeuta" || cargo === "Terapeuta Ocupacional") {
+      registrations.push({ type: "CREFITO", value: candidate.crefito });
+    }
+    
+    if (cargo === "Médico(a)") {
+      registrations.push({ type: "CRM", value: candidate.crm });
+    }
+    
+    return registrations.filter(reg => reg.value);
   };
+
+  const relevantRegistrations = getRelevantRegistrations(candidate.cargo || '');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-4 pb-6 border-b">
           <div className="flex justify-between items-start">
             <div>
@@ -84,17 +94,11 @@ export const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                 )}
               </div>
             </div>
-            <div className="text-right text-sm text-gray-500">
-              <p>Cadastrado em: {candidate.data_cadastro ? new Date(candidate.data_cadastro).toLocaleDateString('pt-BR') : 'N/A'}</p>
-              {candidate.ultima_atualizacao && (
-                <p>Última atualização: {new Date(candidate.ultima_atualizacao).toLocaleDateString('pt-BR')}</p>
-              )}
-            </div>
           </div>
         </DialogHeader>
         
         <div className="space-y-6 py-6">
-          {/* Informações de Contato */}
+          {/* 1. Informações de Contato */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -117,207 +121,95 @@ export const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                   <p className="font-medium">{candidate.telefone || 'Não informado'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-500">Data de Nascimento</p>
-                  <p className="font-medium">{candidate.data_nascimento || 'Não informado'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <FileText className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-500">CPF</p>
-                  <p className="font-medium">{candidate.cpf || 'Não informado'}</p>
-                </div>
-              </div>
-              {candidate.RG && (
-                <div className="flex items-center gap-3">
-                  <FileText className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">RG</p>
-                    <p className="font-medium">{candidate.RG}</p>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
-          {/* Endereço */}
+          {/* 2. Categoria Profissional */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <MapPin className="w-5 h-5 text-careconnect-green" />
-                Endereço
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3">
-                <Home className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-500">Endereço</p>
-                  <p className="font-medium">{candidate.endereco || 'Não informado'}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-500">Cidade/Estado</p>
-                  <p className="font-medium">{candidate.cidade}{candidate.estado ? `, ${candidate.estado}` : ''}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-4 h-4 text-gray-500" />
-                <div>
-                  <p className="text-sm text-gray-500">CEP</p>
-                  <p className="font-medium">{candidate.cep || 'Não informado'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Informações Pessoais */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Users className="w-5 h-5 text-purple-600" />
-                Informações Pessoais
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Possui filhos</p>
-                <p className="font-medium">{formatBooleanValue(candidate.possui_filhos)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Fumante</p>
-                <p className="font-medium">{formatBooleanValue(candidate.fumante)}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Disponível para dormir no local</p>
-                <p className="font-medium">{formatBooleanValue(candidate.disponivel_dormir_local)}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Qualificações Profissionais */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <GraduationCap className="w-5 h-5 text-blue-600" />
-                Qualificações Profissionais
+                <Briefcase className="w-5 h-5 text-careconnect-green" />
+                Categoria Profissional
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Escolaridade</p>
-                  <p className="font-medium">{candidate.escolaridade || 'Não informado'}</p>
+                  <p className="text-sm text-gray-500">Categoria</p>
+                  <p className="font-medium text-lg">{candidate.cargo || 'Não informado'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Possui experiência</p>
-                  <p className="font-medium">{formatBooleanValue(candidate.possui_experiencia)}</p>
+                  <p className="text-sm text-gray-500">Experiência</p>
+                  <p className="font-medium">{candidate.possui_experiencia || 'Não informado'}</p>
                 </div>
               </div>
-              
+
+              {/* Registros Profissionais */}
+              {relevantRegistrations.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-3">Registros Profissionais</p>
+                  <div className="flex gap-3 flex-wrap">
+                    {relevantRegistrations.map((reg, index) => (
+                      <div key={index} className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-2">
+                          <Award className="w-4 h-4 text-blue-600" />
+                          <span className="text-xs text-blue-600 font-medium">{reg.type}</span>
+                        </div>
+                        <p className="text-blue-800 font-medium">{reg.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Cursos */}
               {candidate.cursos && (
                 <div>
                   <p className="text-sm text-gray-500 mb-2">Cursos</p>
-                  <p className="font-medium bg-gray-50 p-3 rounded-lg">{candidate.cursos}</p>
-                </div>
-              )}
-
-              {candidate.descricao_experiencia && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-2">Descrição da Experiência</p>
-                  <p className="font-medium bg-gray-50 p-3 rounded-lg">{candidate.descricao_experiencia}</p>
-                </div>
-              )}
-
-              {candidate.disponibilidade_horarios && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-2">Disponibilidade de Horários</p>
-                  <p className="font-medium bg-gray-50 p-3 rounded-lg">{candidate.disponibilidade_horarios}</p>
-                </div>
-              )}
-
-              {/* Registros Profissionais */}
-              {(candidate.coren || candidate.crefito || candidate.crm) && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-2">Registros Profissionais</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {candidate.coren && (
-                      <div className="bg-blue-50 p-3 rounded-lg">
-                        <p className="text-xs text-blue-600 font-medium">COREN</p>
-                        <p className="text-blue-800">{candidate.coren}</p>
-                      </div>
-                    )}
-                    {candidate.crefito && (
-                      <div className="bg-green-50 p-3 rounded-lg">
-                        <p className="text-xs text-green-600 font-medium">CREFITO</p>
-                        <p className="text-green-800">{candidate.crefito}</p>
-                      </div>
-                    )}
-                    {candidate.crm && (
-                      <div className="bg-purple-50 p-3 rounded-lg">
-                        <p className="text-xs text-purple-600 font-medium">CRM</p>
-                        <p className="text-purple-800">{candidate.crm}</p>
-                      </div>
-                    )}
+                  <div className="bg-gray-50 p-4 rounded-lg border">
+                    <div className="flex items-start gap-2">
+                      <GraduationCap className="w-4 h-4 text-gray-600 mt-1 flex-shrink-0" />
+                      <p className="font-medium text-gray-800">{candidate.cursos}</p>
+                    </div>
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Referências */}
-          {(candidate.referencia_1 || candidate.referencia_2 || candidate.referencia_3) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Heart className="w-5 h-5 text-red-500" />
-                  Referências Profissionais
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {candidate.referencia_1 && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="font-medium text-gray-800 mb-1">Referência 1</p>
-                    <p className="text-gray-700">{candidate.referencia_1}</p>
-                  </div>
-                )}
-                {candidate.referencia_2 && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="font-medium text-gray-800 mb-1">Referência 2</p>
-                    <p className="text-gray-700">{candidate.referencia_2}</p>
-                  </div>
-                )}
-                {candidate.referencia_3 && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="font-medium text-gray-800 mb-1">Referência 3</p>
-                    <p className="text-gray-700">{candidate.referencia_3}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Perfil Profissional */}
-          {candidate.perfil_profissional && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Briefcase className="w-5 h-5 text-orange-600" />
-                  Perfil Profissional
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg leading-relaxed">
-                  {candidate.perfil_profissional}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          {/* 3. Referências */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Heart className="w-5 h-5 text-red-500" />
+                Referências
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {candidate.referencia_1 && (
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <p className="font-medium text-gray-800 mb-2">Referência 1</p>
+                  <p className="text-gray-700">{candidate.referencia_1}</p>
+                </div>
+              )}
+              {candidate.referencia_2 && (
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <p className="font-medium text-gray-800 mb-2">Referência 2</p>
+                  <p className="text-gray-700">{candidate.referencia_2}</p>
+                </div>
+              )}
+              {candidate.referencia_3 && (
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                  <p className="font-medium text-gray-800 mb-2">Referência 3</p>
+                  <p className="text-gray-700">{candidate.referencia_3}</p>
+                </div>
+              )}
+              
+              {!candidate.referencia_1 && !candidate.referencia_2 && !candidate.referencia_3 && (
+                <p className="text-gray-500 italic">Nenhuma referência informada</p>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <DialogFooter className="border-t pt-6">
