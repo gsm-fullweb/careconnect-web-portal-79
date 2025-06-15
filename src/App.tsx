@@ -27,6 +27,7 @@ import Login from "./pages/admin/Login";
 import Dashboard from "./pages/admin/Dashboard";
 import AdminLayout from "./components/admin/AdminLayout";
 import UsersManagement from "./pages/admin/UsersManagement";
+import CustomersManagement from "./pages/admin/CustomersManagement";
 import ContentManagement from "./pages/admin/ContentManagement";
 import BlogManagement from "./pages/admin/BlogManagement";
 import BlogPostEditor from "./pages/admin/BlogPostEditor";
@@ -80,6 +81,7 @@ const App = () => (
             }>
               <Route path="" element={<Dashboard />} />
               <Route path="users" element={<UsersManagement />} />
+              <Route path="customers" element={<CustomersManagement />} />
               <Route path="content" element={<ContentManagement />} />
               <Route path="blog" element={<BlogManagement />} />
               <Route path="blog/edit/:id" element={<BlogPostEditor />} />

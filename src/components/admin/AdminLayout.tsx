@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Menu, X, Home, Users, FileText, MessageSquare, User, LogOut } from "lucide-react";
+import { Menu, X, Home, Users, FileText, MessageSquare, User, LogOut, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminLayout = () => {
@@ -105,6 +105,19 @@ const AdminLayout = () => {
             >
               <Users size={20} className="mr-3" />
               <span>Users</span>
+            </Link>
+            
+            <Link
+              to="/admin/customers"
+              className={`flex items-center py-3 px-4 rounded-md transition-colors ${
+                isActiveRoute("/admin/customers")
+                  ? "bg-careconnect-blue text-white"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`}
+              onClick={() => window.innerWidth < 1024 && setSidebarOpen(false)}
+            >
+              <UserCheck size={20} className="mr-3" />
+              <span>Clientes</span>
             </Link>
             
             <Link
