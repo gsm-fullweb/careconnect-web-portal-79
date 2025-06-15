@@ -439,10 +439,7 @@ const UsersManagement = () => {
                             onValueChange={(newStatus) => handleStatusChange(user.id, newStatus)}
                           >
                             <SelectTrigger className="w-32">
-                              <div className="flex items-center gap-2">
-                                {getStatusIcon(user.status_candidatura)}
-                                <SelectValue />
-                              </div>
+                              <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Em análise">
