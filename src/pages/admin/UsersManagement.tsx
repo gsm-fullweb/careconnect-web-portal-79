@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -234,26 +233,26 @@ const UsersManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between bg-gradient-to-r from-careconnect-blue to-blue-600 text-white p-6 rounded-lg">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <Users className="w-8 h-8" />
-            <h1 className="text-3xl font-bold">Gerenciamento de Candidatos</h1>
+            <Users className="w-8 h-8 text-careconnect-blue" />
+            <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Candidatos</h1>
           </div>
-          <p className="text-blue-100">
+          <p className="text-gray-600">
             Gerencie contas de candidatos e visualize seus dados de forma organizada.
           </p>
           <div className="flex items-center gap-4 mt-4">
-            <div className="bg-white/20 px-3 py-1 rounded-full">
-              <span className="text-sm font-medium">{users.length} candidatos total</span>
+            <div className="bg-gray-100 px-3 py-1 rounded-full">
+              <span className="text-sm font-medium text-gray-700">{users.length} candidatos total</span>
             </div>
-            <div className="bg-white/20 px-3 py-1 rounded-full">
-              <span className="text-sm font-medium">{filteredUsers.length} filtrados</span>
+            <div className="bg-gray-100 px-3 py-1 rounded-full">
+              <span className="text-sm font-medium text-gray-700">{filteredUsers.length} filtrados</span>
             </div>
           </div>
         </div>
         <Button 
-          className="mt-6 lg:mt-0 bg-white text-careconnect-blue hover:bg-gray-100 font-semibold"
+          className="mt-6 lg:mt-0 bg-careconnect-blue hover:bg-careconnect-blue/90 text-white font-semibold"
           onClick={() => setIsAddUserModalOpen(true)}
         >
           <UserPlus className="w-4 h-4 mr-2" />
