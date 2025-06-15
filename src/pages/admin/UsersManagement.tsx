@@ -14,7 +14,6 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ReferencesSection } from "@/components/caregiver/ReferencesSection";
 
 type CandidatoCuidador = {
   id: number;
@@ -26,7 +25,7 @@ type CandidatoCuidador = {
   cargo: string | null;
   data_nascimento: string;
   fumante: string;
-  possui_filhos: boolean;
+  possui_filhos: string;
   escolaridade: string;
   cursos: string | null;
   possui_experiencia: string;
@@ -42,6 +41,12 @@ type CandidatoCuidador = {
   cidade: string;
   endereco: string;
   cep: string;
+  cpf: string | null;
+  RG: string | null;
+  estado: string | null;
+  coren: string | null;
+  crefito: string | null;
+  crm: string | null;
 };
 
 const UsersManagement = () => {
@@ -74,12 +79,7 @@ const UsersManagement = () => {
       if (error) {
         throw error;
       }
-      // Convert "possui_filhos" from string to boolean for the local state
-      const mappedData = (data || []).map((user) => ({
-        ...user,
-        possui_filhos: user.possui_filhos === "Sim", // Convert to boolean
-      }));
-      setUsers(mappedData);
+      setUsers(data || []);
       setError(null);
     } catch (error) {
       console.error('Erro ao buscar candidatos:', error);
@@ -94,7 +94,6 @@ const UsersManagement = () => {
     }
   };
 
-  // Filter users based on search term, cargo and status
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -143,7 +142,7 @@ const UsersManagement = () => {
 
   const handleEditClick = (user: CandidatoCuidador) => {
     setSelectedUser(user);
-    setEditFormData({...user}); // Initialize form with current user data
+    setEditFormData({...user});
     setIsEditModalOpen(true);
     setIsViewDetailsModalOpen(false);
   };
@@ -164,10 +163,8 @@ const UsersManagement = () => {
     if (!selectedUser) return;
     try {
       setLoading(true);
-      // Convert possui_filhos boolean back to string for Supabase
       const updateData = {
         ...editFormData,
-        possui_filhos: editFormData.possui_filhos ? "Sim" : "Não",
         ultima_atualizacao: new Date().toISOString(),
       };
       const { error: updateError } = await supabase
@@ -175,11 +172,11 @@ const UsersManagement = () => {
         .update(updateData)
         .eq('id', selectedUser.id);
       if (updateError) throw updateError;
-      // Update state with converted boolean as well
+      
       setUsers(prevUsers => 
         prevUsers.map(user => 
           user.id === selectedUser.id
-            ? { ...user, ...updateData, possui_filhos: updateData.possui_filhos === "Sim" }
+            ? { ...user, ...updateData }
             : user
         )
       );
@@ -202,12 +199,10 @@ const UsersManagement = () => {
     }
   };
 
-  // Get unique cargo values from the users data
   const cargoOptions = Array.from(
     new Set(users.filter(user => user.cargo).map(user => user.cargo))
   );
 
-  // Get unique status values from the users data
   const statusOptions = Array.from(
     new Set(users.map(user => user.status_candidatura))
   );
@@ -234,30 +229,14 @@ const UsersManagement = () => {
     }
   };
 
-  // Helper function to convert boolean values to Portuguese
   const formatBooleanValue = (value: boolean | string | null): string => {
     if (value === true || value === "true" || value === "Sim") return "Sim";
     if (value === false || value === "false" || value === "Não") return "Não";
     return String(value || "Não informado");
   };
 
-  // Create candidatoData object for ReferencesSection component
-  const createCandidatoData = (user: CandidatoCuidador) => {
-    // Combine individual references into the format expected by ReferencesSection
-    const referencias = [user.referencia_1, user.referencia_2, user.referencia_3]
-      .filter(ref => ref && ref.trim() !== '')
-      .join(' | ');
-    
-    return {
-      ...user,
-      referencias: referencias || null,
-      descricao_experiencia: user.descricao_experiencia
-    };
-  };
-
   return (
     <div className="space-y-6">
-      {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -293,7 +272,6 @@ const UsersManagement = () => {
               Lista de Candidatos
             </CardTitle>
             
-            {/* Search and Filter Toggle */}
             <div className="flex items-center gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -315,7 +293,6 @@ const UsersManagement = () => {
             </div>
           </div>
           
-          {/* Filters Section */}
           {showFilters && (
             <div className="flex flex-wrap gap-4 pt-4 border-t">
               <div className="flex flex-col gap-1">
@@ -366,7 +343,6 @@ const UsersManagement = () => {
         </CardHeader>
         
         <CardContent className="p-0">
-          {/* Loading state */}
           {loading && (
             <div className="flex flex-col justify-center items-center py-16">
               <div className="w-12 h-12 border-4 border-careconnect-blue border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -374,7 +350,6 @@ const UsersManagement = () => {
             </div>
           )}
           
-          {/* Error state */}
           {!loading && error && (
             <div className="bg-red-50 border border-red-200 p-6 m-6 rounded-lg text-center">
               <div className="text-red-600 mb-4">
@@ -392,7 +367,6 @@ const UsersManagement = () => {
             </div>
           )}
           
-          {/* Users Table */}
           {!loading && !error && (
             <div className="overflow-x-auto">
               <Table>
@@ -505,7 +479,6 @@ const UsersManagement = () => {
             </div>
           )}
           
-          {/* Footer with pagination info */}
           {!loading && !error && filteredUsers.length > 0 && (
             <div className="flex justify-between items-center p-4 border-t bg-gray-50/30">
               <div className="text-sm text-gray-600">
@@ -520,7 +493,6 @@ const UsersManagement = () => {
         </CardContent>
       </Card>
       
-      {/* Details Modal */}
       {isViewDetailsModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsViewDetailsModalOpen(false)}></div>
@@ -549,7 +521,6 @@ const UsersManagement = () => {
             
             <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(85vh - 100px)' }}>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Personal Information */}
                 <div className="space-y-6">
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
@@ -567,18 +538,31 @@ const UsersManagement = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Data de Nascimento:</span>
-                        <span className="text-gray-900">{selectedUser.data_nascimento || "Não informado"}</span>
+                        <span className="text-gray-900">
+                          {selectedUser.data_nascimento ? 
+                            new Date(selectedUser.data_nascimento).toLocaleDateString('pt-BR') : 
+                            "Não informado"
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">CPF:</span>
+                        <span className="text-gray-900">{selectedUser.cpf || "Não informado"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">RG:</span>
+                        <span className="text-gray-900">{selectedUser.RG || "Não informado"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Fumante:</span>
-                        <Badge variant={selectedUser.fumante === "Sim" ? "destructive" : "default"}>
-                          {selectedUser.fumante}
+                        <Badge variant={selectedUser.fumante === "true" ? "destructive" : "default"}>
+                          {selectedUser.fumante === "true" ? "Sim" : "Não"}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Possui Filhos:</span>
-                        <Badge variant={selectedUser.possui_filhos ? "default" : "secondary"}>
-                          {formatBooleanValue(selectedUser.possui_filhos)}
+                        <Badge variant={selectedUser.possui_filhos === "Sim" ? "default" : "secondary"}>
+                          {selectedUser.possui_filhos}
                         </Badge>
                       </div>
                     </div>
@@ -587,6 +571,10 @@ const UsersManagement = () => {
                   <div className="bg-green-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-green-900 mb-3">Endereço</h3>
                     <div className="space-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">Estado:</span>
+                        <span className="text-gray-900">{selectedUser.estado || "Não informado"}</span>
+                      </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Cidade:</span>
                         <span className="text-gray-900">{selectedUser.cidade}</span>
@@ -603,7 +591,6 @@ const UsersManagement = () => {
                   </div>
                 </div>
                 
-                {/* Professional Information */}
                 <div className="space-y-6">
                   <div className="bg-purple-50 p-4 rounded-lg">
                     <h3 className="font-semibold text-purple-900 mb-3">Qualificações</h3>
@@ -619,6 +606,18 @@ const UsersManagement = () => {
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-700">Cargo:</span>
                         <span className="text-gray-900">{selectedUser.cargo || "Não informado"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">COREN:</span>
+                        <span className="text-gray-900">{selectedUser.coren || "Não informado"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">CREFITO:</span>
+                        <span className="text-gray-900">{selectedUser.crefito || "Não informado"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">CRM:</span>
+                        <span className="text-gray-900">{selectedUser.crm || "Não informado"}</span>
                       </div>
                     </div>
                   </div>
@@ -661,17 +660,52 @@ const UsersManagement = () => {
                 </div>
               </div>
               
-              {/* References Section using the ReferencesSection component */}
               <div className="mt-8 pt-6 border-t">
-                <ReferencesSection
-                  editMode={false}
-                  candidatoData={createCandidatoData(selectedUser)}
-                  editFormData={{}}
-                  handleInputChange={() => {}}
-                />
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Heart className="w-5 h-5" />
+                      Referências Profissionais
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {selectedUser.referencia_1 && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <span className="font-medium text-gray-800">Referência 1:</span>
+                        <p className="text-gray-700 mt-1">{selectedUser.referencia_1}</p>
+                      </div>
+                    )}
+                    
+                    {selectedUser.referencia_2 && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <span className="font-medium text-gray-800">Referência 2:</span>
+                        <p className="text-gray-700 mt-1">{selectedUser.referencia_2}</p>
+                      </div>
+                    )}
+                    
+                    {selectedUser.referencia_3 && (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <span className="font-medium text-gray-800">Referência 3:</span>
+                        <p className="text-gray-700 mt-1">{selectedUser.referencia_3}</p>
+                      </div>
+                    )}
+                    
+                    {!selectedUser.referencia_1 && !selectedUser.referencia_2 && !selectedUser.referencia_3 && (
+                      <p className="text-gray-900">Não informado</p>
+                    )}
+                    
+                    {selectedUser.descricao_experiencia && (
+                      <div className="mt-4">
+                        <h4 className="font-medium text-gray-800 mb-2">Descrição da Experiência:</h4>
+                        <p className="text-gray-700 p-3 bg-gray-50 rounded-lg">
+                          {selectedUser.descricao_experiencia}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
               
-              {/* Additional Information */}
               <div className="mt-8 pt-6 border-t">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="bg-gray-50 p-4 rounded-lg">
@@ -722,7 +756,6 @@ const UsersManagement = () => {
         </div>
       )}
       
-      {/* Edit Modal */}
       {isEditModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsEditModalOpen(false)}></div>
@@ -737,7 +770,6 @@ const UsersManagement = () => {
               
               <form onSubmit={handleSaveEdit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Informações Pessoais */}
                   <div className="space-y-4">
                     <h3 className="font-medium text-gray-700 border-b pb-2">Informações Pessoais</h3>
                     
@@ -776,9 +808,37 @@ const UsersManagement = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
                       <Input 
                         name="data_nascimento"
+                        type="date"
                         value={editFormData.data_nascimento || ''}
                         onChange={handleEditInputChange}
                         required
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                      <Input 
+                        name="cpf"
+                        value={editFormData.cpf || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">RG</label>
+                      <Input 
+                        name="RG"
+                        value={editFormData.RG || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                      <Input 
+                        name="estado"
+                        value={editFormData.estado || ''}
+                        onChange={handleEditInputChange}
                       />
                     </div>
                     
@@ -821,27 +881,26 @@ const UsersManagement = () => {
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
                         required
                       >
-                        <option value="Sim">Sim</option>
-                        <option value="Não">Não</option>
+                        <option value="true">Sim</option>
+                        <option value="false">Não</option>
                       </select>
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Possui Filhos</label>
-                      <div className="flex items-center space-x-2">
-                        <input 
-                          type="checkbox"
-                          name="possui_filhos"
-                          checked={!!editFormData.possui_filhos}
-                          onChange={(e) => setEditFormData(prev => ({ ...prev, possui_filhos: e.target.checked }))}
-                          className="h-4 w-4 rounded border-gray-300 text-careconnect-blue focus:ring-careconnect-blue"
-                        />
-                        <span>Sim</span>
-                      </div>
+                      <select
+                        name="possui_filhos"
+                        value={editFormData.possui_filhos || ''}
+                        onChange={handleEditInputChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue"
+                        required
+                      >
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                      </select>
                     </div>
                   </div>
                   
-                  {/* Formação e Experiência */}
                   <div className="space-y-4">
                     <h3 className="font-medium text-gray-700 border-b pb-2">Formação e Experiência</h3>
                     
@@ -869,6 +928,33 @@ const UsersManagement = () => {
                       <Input 
                         name="cargo"
                         value={editFormData.cargo || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">COREN</label>
+                      <Input 
+                        name="coren"
+                        value={editFormData.coren || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CREFITO</label>
+                      <Input 
+                        name="crefito"
+                        value={editFormData.crefito || ''}
+                        onChange={handleEditInputChange}
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CRM</label>
+                      <Input 
+                        name="crm"
+                        value={editFormData.crm || ''}
                         onChange={handleEditInputChange}
                       />
                     </div>
@@ -971,6 +1057,7 @@ const UsersManagement = () => {
                         <option value="Em análise">Em análise</option>
                         <option value="Aprovado">Aprovado</option>
                         <option value="Rejeitado">Rejeitado</option>
+                        <option value="Cadastro completo - Em análise">Cadastro completo - Em análise</option>
                       </select>
                     </div>
                   </div>
@@ -998,7 +1085,6 @@ const UsersManagement = () => {
         </div>
       )}
       
-      {/* Add User Modal */}
       {isAddUserModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsAddUserModalOpen(false)}></div>
