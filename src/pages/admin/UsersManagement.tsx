@@ -14,6 +14,7 @@ import {
   TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CandidateDetailsModal } from "@/components/admin/CandidateDetailsModal";
 
 type CandidatoCuidador = {
@@ -97,6 +98,41 @@ const UsersManagement = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (userId: number, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('candidatos_cuidadores_rows')
+        .update({ 
+          status_candidatura: newStatus,
+          ultima_atualizacao: new Date().toISOString()
+        })
+        .eq('id', userId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Atualiza o estado local
+      setUsers(currentUsers =>
+        currentUsers.map(user =>
+          user.id === userId ? { ...user, status_candidatura: newStatus } : user
+        )
+      );
+      
+      toast({
+        title: "Status atualizado",
+        description: `Status do candidato alterado para "${newStatus}" com sucesso.`,
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status do candidato. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -398,13 +434,37 @@ const UsersManagement = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={getStatusVariant(user.status_candidatura)}
-                            className="flex items-center gap-1 w-fit"
+                          <Select
+                            value={user.status_candidatura}
+                            onValueChange={(newStatus) => handleStatusChange(user.id, newStatus)}
                           >
-                            {getStatusIcon(user.status_candidatura)}
-                            {user.status_candidatura}
-                          </Badge>
+                            <SelectTrigger className="w-32">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(user.status_candidatura)}
+                                <SelectValue />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Em análise">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-4 h-4" />
+                                  Em análise
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="Aprovado">
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="w-4 h-4" />
+                                  Aprovado
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="Rejeitado">
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="w-4 h-4" />
+                                  Rejeitado
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="text-sm text-gray-500">
                           {user.data_cadastro ? 
