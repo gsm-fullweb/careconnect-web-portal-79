@@ -118,7 +118,7 @@ export default function PreCadastro() {
 
       console.log("Usuário criado no auth:", authData);
 
-      // Criar registro na tabela de candidatos
+      // Criar registro na tabela de candidatos com TODOS os campos obrigatórios
       const { data: candidateData, error: candidateError } = await supabase
         .from('candidatos_cuidadores_rows')
         .insert({
@@ -132,9 +132,13 @@ export default function PreCadastro() {
           disponivel_dormir_local: 'Não',
           status_candidatura: 'Em análise',
           cidade: '',
-          endereco: '',
-          cep: '',
-          possui_filhos: "Não", // <-- Explicitly as string here!
+          endereco: 'A ser preenchido',
+          cep: '00000-000',
+          possui_filhos: "Não",
+          cursos: 'A ser preenchido',
+          descricao_experiencia: 'A ser preenchido no cadastro completo',
+          disponibilidade_horarios: 'A ser definido',
+          referencias: 'A ser preenchido no cadastro completo',
           data_cadastro: new Date().toISOString().split('T')[0]
         })
         .select()
