@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +25,7 @@ interface Testimonial {
 }
 
 interface Caregiver {
-  id: string;
+  id: number; // Changed from string to number to match database
   nome: string;
 }
 
@@ -109,7 +110,7 @@ export default function ClienteDashboard() {
           rating: newTestimonial.rating,
           published: false,
           customer_id: user.id,
-          caregiver_id: newTestimonial.caregiver_id
+          caregiver_id: newTestimonial.caregiver_id || null
         });
 
       if (error) throw error;
@@ -185,7 +186,7 @@ export default function ClienteDashboard() {
                         </SelectTrigger>
                         <SelectContent>
                           {caregivers.map((caregiver) => (
-                            <SelectItem key={caregiver.id} value={caregiver.id}>
+                            <SelectItem key={caregiver.id} value={caregiver.id.toString()}>
                               {caregiver.nome}
                             </SelectItem>
                           ))}

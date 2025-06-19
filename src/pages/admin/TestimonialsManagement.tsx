@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -45,9 +46,6 @@ export default function TestimonialsManagement() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [caregivers, setCaregivers] = useState<Caregiver[]>([]);
-  const [newTestimonial, setNewTestimonial] = useState<Omit<Testimonial, 'id'>>;
-  const [editingTestimonialId, setEditingTestimonialId] = useState<string | null>(null);
-  const [editedTestimonial, setEditedTestimonial] = useState<Testimonial | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -135,7 +133,10 @@ export default function TestimonialsManagement() {
       if (error) throw error;
 
       toast.success("Depoimentos exemplo adicionados com sucesso!");
-      fetchTestimonials();
+      
+      // Refresh testimonials after adding samples
+      const { data } = await supabase.from('testimonials').select('*');
+      if (data) setTestimonials(data as Testimonial[]);
     } catch (error) {
       console.error("Erro ao adicionar depoimentos exemplo:", error);
       toast.error("Erro ao adicionar depoimentos exemplo.");

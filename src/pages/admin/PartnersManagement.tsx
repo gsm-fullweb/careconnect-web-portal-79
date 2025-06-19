@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -139,7 +140,7 @@ export default function PartnersManagement() {
         type: "hospital"
       },
       {
-        name: "Farmácia Central",
+        name: "Farmácia Central", 
         description: "Desconto especial em medicamentos para nossos clientes",
         logo_url: "/placeholder.svg",
         website_url: "https://farmaciacentral.com.br",
