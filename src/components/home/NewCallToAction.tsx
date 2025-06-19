@@ -50,7 +50,7 @@ const NewCallToAction = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="bg-white/10 backdrop-blur rounded-xl p-6">
-              <div className="text-3xl font-bold mb-2">< 2 min</div>
+              <div className="text-3xl font-bold mb-2">&lt; 2 min</div>
               <div className="text-white/90">Para encontrar cuidadores</div>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-xl p-6">
