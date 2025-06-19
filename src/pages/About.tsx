@@ -1,41 +1,163 @@
 
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
+import { Shield, Clock, Award, Heart, CheckCircle, Lock, Zap, MessageCircle } from "lucide-react";
 
 const About = () => {
+  const handleWhatsAppClick = () => {
+    const phoneNumber = "5511999999999";
+    const message = "Olá! Gostaria de conhecer mais sobre a CareConnect.";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const values = [
+    {
+      icon: <Shield className="h-12 w-12 text-careconnect-blue mb-4" />,
+      title: "Segurança",
+      description: "Priorizamos a segurança e o bem-estar dos idosos e de suas famílias. Todos os nossos cuidadores passam por uma rigorosa verificação de antecedentes.",
+    },
+    {
+      icon: <Clock className="h-12 w-12 text-careconnect-blue mb-4" />,
+      title: "Disponibilidade",
+      description: "Entendemos que o cuidado não tem hora marcada. Por isso, estamos disponíveis 24 horas por dia, 7 dias por semana para atender às necessidades dos nossos clientes.",
+    },
+    {
+      icon: <Award className="h-12 w-12 text-careconnect-blue mb-4" />,
+      title: "Qualidade",
+      description: "Comprometemo-nos com a excelência em todos os serviços prestados, garantindo que cada cuidador tenha a qualificação necessária para oferecer o melhor atendimento.",
+    },
+    {
+      icon: <Heart className="h-12 w-12 text-careconnect-blue mb-4" />,
+      title: "Empatia",
+      description: "Tratamos cada idoso com o carinho, respeito e dignidade que merecem, compreendendo suas necessidades individuais e oferecendo um atendimento humanizado.",
+    },
+  ];
+
+  const teamMembers = [
+    {
+      image: "https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//member-1.jpg",
+      name: "Kleber de Oliveira",
+      title: "Diretor Geral",
+      description: "Kleber de Oliveira é Diretor Geral e idealizador do projeto, que nasceu a partir de sua própria dificuldade em encontrar cuidadores de idosos qualificados. Com ampla experiência empresarial, ele une visão estratégica, foco na humanização do atendimento e uso da tecnologia para criar soluções eficazes e empáticas no cuidado com a pessoa idosa.",
+    },
+    {
+      image: "https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//member-2.jpg",
+      name: "Richard Portela",
+      title: "Desenvolvedor",
+      description: "Richard Portela é o desenvolvedor responsável por dar vida à plataforma CareConnect, com foco na implementação da assistente virtual IA Mila, que torna o agendamento de cuidadores mais rápido e inteligente. Combinando tecnologia e empatia para criar soluções modernas, funcionais e acessíveis, sendo peça-chave na transformação digital do cuidado com idosos.",
+    },
+    {
+      image: "https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//member-3.jpg",
+      name: "Silas Cilva",
+      title: "Social Media Manager",
+      description: "Silas Cilva é especialista em redes sociais, responsável pelo planejamento, gerenciamento e desempenho das plataformas digitais da empresa. Com experiência também em desenvolvimento web e criação de interfaces modernas e responsivas, destaca-se por desenvolver soluções eficientes, criativas e centradas na experiência do usuário.",
+    },
+  ];
+
+  const features = [
+    {
+      icon: <CheckCircle className="h-10 w-10 text-careconnect-green mb-3" />,
+      title: "Recomendações Personalizadas",
+      description: "Entendemos as necessidades específicas do seu familiar e sugerimos os cuidadores mais adequados com base em experiência e especialidades.",
+    },
+    {
+      icon: <Lock className="h-10 w-10 text-careconnect-green mb-3" />,
+      title: "Contratação Segura",
+      description: "Confirme agendamentos, verifique disponibilidade e finalize a contratação de forma segura diretamente pela plataforma.",
+    },
+    {
+      icon: <Zap className="h-10 w-10 text-careconnect-green mb-3" />,
+      title: "Resposta Rápida",
+      description: "Receba respostas rápidas para suas dúvidas sobre cuidadores, serviços e agendamentos sem tempo de espera.",
+    },
+  ];
+
   return (
     <Layout>
       {/* Hero Section */}
-      <div className="bg-careconnect-blue/90 text-white py-20">
-        <div className="container-custom text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">About CareConnect</h1>
-          <p className="text-xl text-white/90 max-w-3xl mx-auto">
-            Dedicated to connecting compassionate care with those who need it most.
-          </p>
+      <section className="bg-gradient-to-br from-careconnect-blue to-purple-600 text-white py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center opacity-10"></div>
+        
+        <div className="container-custom relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight animate-fade-in">
+                Sobre a <span className="text-careconnect-green">CareConnect</span>
+              </h1>
+              <p className="text-xl text-white/90 leading-relaxed animate-fade-in">
+                A CareConnect foi fundada no final de 2024 a partir da experiência pessoal de Kleber de Oliveira, que enfrentou desafios para encontrar cuidadores qualificados e confiáveis para um familiar idoso.
+              </p>
+              <p className="text-lg text-white/80 leading-relaxed animate-fade-in">
+                Nossa missão é transformar a forma como o cuidado é acessado, garantindo que cada idoso receba atenção adequada com dignidade, conforto e qualidade de vida.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4 animate-fade-in">
+                <Button
+                  size="lg"
+                  className="bg-careconnect-green hover:bg-careconnect-green/90 text-white group"
+                  onClick={handleWhatsAppClick}
+                >
+                  <MessageCircle className="mr-2 h-5 w-5 transition-transform group-hover:rotate-12" />
+                  Falar com a Mila
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="border-white text-white hover:bg-white/10"
+                >
+                  <a href="/cadastrar-cuidador">Seja um Cuidador</a>
+                </Button>
+              </div>
+            </div>
+            <div className="flex justify-center lg:justify-end animate-fade-in">
+              <div className="relative">
+                <img
+                  src="https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//about-image.png"
+                  alt="Equipe CareConnect"
+                  className="rounded-2xl shadow-2xl w-full max-w-md"
+                />
+                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-careconnect-green rounded-lg hidden md:block opacity-80"></div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      {/* Our Story */}
+        
+        {/* Elementos decorativos */}
+        <div className="hidden lg:block absolute -bottom-10 right-10 w-32 h-32 bg-careconnect-green rounded-full opacity-20"></div>
+        <div className="hidden lg:block absolute top-20 left-10 w-16 h-16 bg-careconnect-green rounded-full opacity-30"></div>
+      </section>
+
+      {/* Nossa História */}
       <section className="section bg-white">
         <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="mb-6 text-careconnect-blue">Nossa História</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Conheça como começamos e porque estamos comprometidos com o cuidado de qualidade
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="mb-6">Our Story</h2>
-              <p className="text-lg text-gray-700 mb-4">
-                CareConnect was founded in 2010 by Sarah and Michael Chen, who experienced firsthand the challenges of finding quality care for their aging parents.
-              </p>
-              <p className="text-lg text-gray-700 mb-4">
-                Frustrated by the lack of personalized care options, they set out to create a service that would connect families with compassionate, qualified caregivers who could provide individualized support.
-              </p>
-              <p className="text-lg text-gray-700">
-                What started as a small local operation has grown into a nationwide network of certified caregivers, all sharing the same mission: to provide the highest quality of care with dignity and respect.
-              </p>
+            <div className="space-y-6">
+              <h3 className="text-2xl md:text-3xl font-bold text-careconnect-blue">Como tudo começou</h3>
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                <p>
+                  A CareConnect nasceu da necessidade real enfrentada por nosso fundador, que percebeu a dificuldade das famílias em encontrar cuidadores confiáveis e qualificados para seus entes queridos.
+                </p>
+                <p>
+                  A partir desta experiência, criamos uma plataforma que revolucionou o mercado de cuidados para idosos, implementando tecnologias avançadas para garantir uma experiência simples, segura e humanizada.
+                </p>
+                <p>
+                  Hoje, conectamos famílias a cuidadores experientes em todo o Brasil, sempre com o compromisso de oferecer o melhor cuidado possível, com a conveniência da tecnologia e o calor humano que cada idoso merece.
+                </p>
+              </div>
             </div>
             <div className="relative">
               <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-                <img 
-                  src="https://images.unsplash.com/photo-1576765608622-067973a79f53?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                  alt="CareConnect founders" 
+                <img
+                  src="https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//history-image.jpg"
+                  alt="História da CareConnect"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -44,134 +166,126 @@ const About = () => {
           </div>
         </div>
       </section>
-      
-      {/* Mission and Values */}
+
+      {/* Nossos Valores */}
       <section className="section bg-careconnect-light">
         <div className="container-custom">
           <div className="text-center mb-12">
-            <h2 className="mb-4">Our Mission & Values</h2>
+            <h2 className="mb-6 text-careconnect-blue">Nossos Valores</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We're guided by a set of core principles that inform everything we do.
+              Os princípios que norteiam nosso trabalho e garantem a qualidade do nosso serviço
             </p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="bg-white p-8 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold mb-4 text-careconnect-blue">Our Mission</h3>
-              <p className="text-gray-700 mb-4">
-                To enhance the quality of life for those who need care by connecting them with compassionate, skilled caregivers who provide personalized support that respects dignity and independence.
-              </p>
-              <p className="text-gray-700">
-                We strive to be the bridge between exceptional caregivers and the individuals and families who need them, creating meaningful relationships built on trust and care.
-              </p>
-            </div>
-            
-            <div className="bg-white p-8 rounded-lg shadow-md">
-              <h3 className="text-2xl font-semibold mb-4 text-careconnect-green">Our Values</h3>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <span className="text-careconnect-green mr-2 text-xl">✓</span>
-                  <div>
-                    <h4 className="font-semibold">Compassion</h4>
-                    <p className="text-gray-700">We approach every individual with empathy and understanding.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-careconnect-green mr-2 text-xl">✓</span>
-                  <div>
-                    <h4 className="font-semibold">Excellence</h4>
-                    <p className="text-gray-700">We maintain the highest standards in caregiving and service.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-careconnect-green mr-2 text-xl">✓</span>
-                  <div>
-                    <h4 className="font-semibold">Respect</h4>
-                    <p className="text-gray-700">We honor the dignity and individuality of each person we serve.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-careconnect-green mr-2 text-xl">✓</span>
-                  <div>
-                    <h4 className="font-semibold">Integrity</h4>
-                    <p className="text-gray-700">We operate with honesty and transparency in all we do.</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Team Section */}
-      <section className="section bg-white">
-        <div className="container-custom">
-          <div className="text-center mb-12">
-            <h2 className="mb-4">Our Leadership Team</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Meet the dedicated professionals behind CareConnect.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                name: "Sarah Chen",
-                role: "Co-Founder & CEO",
-                image: "https://i.pravatar.cc/300?img=25",
-                bio: "Former healthcare executive with a passion for improving elder care."
-              },
-              {
-                name: "Michael Chen",
-                role: "Co-Founder & COO",
-                image: "https://i.pravatar.cc/300?img=12",
-                bio: "Background in healthcare technology and operations management."
-              },
-              {
-                name: "Dr. Lisa Johnson",
-                role: "Medical Director",
-                image: "https://i.pravatar.cc/300?img=10",
-                bio: "Board-certified geriatrician with 15+ years of experience."
-              },
-              {
-                name: "Robert Williams",
-                role: "Director of Caregiver Relations",
-                image: "https://i.pravatar.cc/300?img=4",
-                bio: "Former caregiver with a deep understanding of the profession."
-              }
-            ].map((member, index) => (
-              <div key={index} className="text-center">
-                <div className="relative w-40 h-40 mx-auto mb-4">
-                  <div className="w-full h-full rounded-full overflow-hidden">
-                    <img 
-                      src={member.image} 
-                      alt={member.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="absolute inset-0 rounded-full border-4 border-careconnect-blue"></div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {values.map((value, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-2"
+              >
+                <div className="flex justify-center mb-6">
+                  {value.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-careconnect-blue">{member.name}</h3>
-                <p className="text-careconnect-green font-medium mb-2">{member.role}</p>
-                <p className="text-gray-700">{member.bio}</p>
+                <h3 className="text-xl font-bold text-careconnect-blue mb-4 text-center">{value.title}</h3>
+                <p className="text-gray-600 text-center leading-relaxed">{value.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
-      
-      {/* Call to Action */}
-      <section className="section bg-careconnect-blue text-white">
-        <div className="container-custom text-center">
-          <h2 className="text-4xl font-bold mb-6 text-white">Join Our Team</h2>
-          <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
-            Are you a compassionate caregiver looking to make a difference?
-            We're always looking for dedicated professionals to join our network.
-          </p>
-          <Button className="bg-white text-careconnect-blue hover:bg-white/90">
-            Apply As A Caregiver
-          </Button>
+
+      {/* Nossos Recursos */}
+      <section className="section bg-white">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="mb-6 text-careconnect-blue">Nossos Recursos</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Tecnologia avançada para simplificar a busca por cuidadores qualificados
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex justify-center mb-6">
+                  {feature.icon}
+                </div>
+                <h4 className="font-bold text-xl text-careconnect-blue mb-4 text-center">{feature.title}</h4>
+                <p className="text-gray-600 text-center leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </section>
+
+      {/* Nossa Equipe */}
+      <section className="section bg-careconnect-light">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="mb-6 text-careconnect-blue">Nossa Equipe</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Conheça os profissionais dedicados que fazem parte da CareConnect
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {teamMembers.map((member, index) => (
+              <div key={index} className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
+                <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden mb-6">
+                  <img
+                    src={member.image}
+                    alt={`Membro da equipe ${member.name}`}
+                    className="object-cover w-full h-full"
+                  />
+                  <div className="absolute inset-0 rounded-full border-4 border-careconnect-blue"></div>
+                </div>
+                <div className="text-center">
+                  <h3 className="text-xl font-semibold text-careconnect-blue mb-2">{member.name}</h3>
+                  <p className="text-careconnect-green font-medium mb-4">{member.title}</p>
+                  <p className="text-gray-600 leading-relaxed text-sm">
+                    {member.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="section bg-gradient-to-br from-careconnect-blue via-purple-600 to-careconnect-blue text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')] bg-cover bg-center opacity-10"></div>
+        
+        <div className="container-custom text-center relative z-10">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            Experimente o futuro do cuidado para idosos
+          </h2>
+          <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
+            Comece agora mesmo encontrando cuidadores qualificados ou junte-se à nossa equipe de profissionais.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Button
+              size="lg"
+              className="bg-careconnect-green hover:bg-careconnect-green/90 text-white"
+              onClick={handleWhatsAppClick}
+            >
+              <MessageCircle className="mr-2 h-5 w-5" />
+              Buscar Cuidadores
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="border-white text-white hover:bg-white/10"
+            >
+              <a href="/cadastrar-cuidador">Cadastrar como Cuidador</a>
+            </Button>
+          </div>
+        </div>
+        
+        {/* Elementos decorativos */}
+        <div className="hidden lg:block absolute -bottom-10 right-10 w-32 h-32 bg-careconnect-green rounded-full opacity-20"></div>
+        <div className="hidden lg:block absolute top-20 left-10 w-16 h-16 bg-careconnect-green rounded-full opacity-30"></div>
       </section>
     </Layout>
   );
