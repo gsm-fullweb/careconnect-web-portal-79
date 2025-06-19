@@ -69,6 +69,16 @@ interface Partner {
   type: string;
 }
 
+// Define interface for database insert
+interface PartnerInsert {
+  name: string;
+  description: string;
+  logo_url: string;
+  website_url: string;
+  status: string;
+  type: string;
+}
+
 export default function PartnersManagement() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,30 +140,30 @@ export default function PartnersManagement() {
   };
 
   const addSamplePartners = async () => {
-    const samplePartners = [
+    const samplePartners: PartnerInsert[] = [
       {
         name: "Hospital São José",
         description: "Parceria para cuidados hospitalares especializados",
         logo_url: "/placeholder.svg",
         website_url: "https://hospitalsaojose.com.br",
-        status: "active" as const,
-        type: "hospital" as const
+        status: "active",
+        type: "hospital"
       },
       {
         name: "Farmácia Central", 
         description: "Desconto especial em medicamentos para nossos clientes",
         logo_url: "/placeholder.svg",
         website_url: "https://farmaciacentral.com.br",
-        status: "active" as const,
-        type: "farmacia" as const
+        status: "active",
+        type: "farmacia"
       },
       {
         name: "Clínica Fisio+",
         description: "Serviços de fisioterapia com valores especiais",
         logo_url: "/placeholder.svg",
         website_url: "https://clinicafisio.com.br",
-        status: "active" as const,
-        type: "clinica" as const
+        status: "active",
+        type: "clinica"
       }
     ];
 
