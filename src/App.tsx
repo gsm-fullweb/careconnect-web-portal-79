@@ -21,6 +21,7 @@ import Obrigado from "./pages/Obrigado";
 import PainelCuidador from "./pages/PainelCuidador";
 import ClienteDashboard from "./pages/ClienteDashboard";
 import DashboardRedirect from "./pages/DashboardRedirect";
+import Assinatura from "./pages/Assinatura";
 
 // Admin Pages
 import Login from "./pages/admin/Login";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/blog/:id" element={<BlogPost />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/plans" element={<SubscriptionPlans />} />
+            <Route path="/assinatura" element={<Assinatura />} />
             <Route path="/pre-cadastro" element={<PreCadastro />} />
             <Route path="/cadastrar-cuidador" element={<CadastrarCuidador />} />
             <Route path="/obrigado" element={<Obrigado />} />
