@@ -136,24 +136,24 @@ export default function PartnersManagement() {
         description: "Parceria para cuidados hospitalares especializados",
         logo_url: "/placeholder.svg",
         website_url: "https://hospitalsaojose.com.br",
-        status: "active",
-        type: "hospital"
+        status: "active" as const,
+        type: "hospital" as const
       },
       {
         name: "Farmácia Central", 
         description: "Desconto especial em medicamentos para nossos clientes",
         logo_url: "/placeholder.svg",
         website_url: "https://farmaciacentral.com.br",
-        status: "active",
-        type: "farmacia"
+        status: "active" as const,
+        type: "farmacia" as const
       },
       {
         name: "Clínica Fisio+",
         description: "Serviços de fisioterapia com valores especiais",
         logo_url: "/placeholder.svg",
         website_url: "https://clinicafisio.com.br",
-        status: "active",
-        type: "clinica"
+        status: "active" as const,
+        type: "clinica" as const
       }
     ];
 
