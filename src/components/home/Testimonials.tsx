@@ -1,129 +1,238 @@
 
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-// Updated testimonials data
-const testimonialsData = [
-  {
-    id: 1,
-    text: "A CareConnect encontrou a cuidadora perfeita para minha mãe. O nível de atenção e cuidado tem sido excepcional. Não poderia recomendar mais!",
-    name: "Mariana Silva",
-    role: "Filha de Cliente",
-    image: "https://i.pravatar.cc/150?img=1"
-  },
-  {
-    id: 2,
-    text: "Como alguém com desafios de mobilidade, estava hesitante em ter uma cuidadora em casa. A CareConnect me apresentou uma profissional que respeita minha independência enquanto oferece o suporte necessário.",
-    name: "Roberto Almeida",
-    role: "Cliente",
-    image: "https://i.pravatar.cc/150?img=3"
-  },
-  {
-    id: 3,
-    text: "Trabalhar com a CareConnect tem sido maravilhoso. Eles valorizam seus cuidadores e garantem que tenhamos tudo o que precisamos para oferecer um excelente cuidado aos nossos clientes.",
-    name: "Ana Rodrigues",
-    role: "Cuidadora CareConnect",
-    image: "https://i.pravatar.cc/150?img=5"
-  },
-  {
-    id: 4,
-    text: "A tranquilidade que vem de saber que meu avô está em mãos capazes e gentis não tem preço. A CareConnect não apenas forneceu uma cuidadora - eles se tornaram parte da nossa família.",
-    name: "Carlos Santos",
-    role: "Neto de Cliente",
-    image: "https://i.pravatar.cc/150?img=7"
+type Testimonial = {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  content: string;
+  rating: number | null;
+  role: string | null;
+  published: boolean | null;
+};
+
+function Testimonials() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        console.log('Buscando depoimentos do banco de dados...');
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('*')
+          .eq('published', true)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Erro ao buscar depoimentos:', error);
+          return;
+        }
+        
+        console.log('Depoimentos encontrados:', data);
+        setTestimonials(data || []);
+      } catch (error) {
+        console.error('Erro ao buscar depoimentos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+  const createGroups = (items: Testimonial[], size: number): Testimonial[][] => {
+    const groups: Testimonial[][] = [];
+    for (let i = 0; i < items.length; i += size) {
+      groups.push(items.slice(i, i + size));
+    }
+    return groups;
+  };
+
+  const testimonialGroups = createGroups(testimonials, 3);
+  const [currentGroup, setCurrentGroup] = useState(0);
+
+  const goToNextGroup = () => {
+    setCurrentGroup((prev) => (prev === testimonialGroups.length - 1 ? 0 : prev + 1));
+  };
+
+  const goToPrevGroup = () => {
+    setCurrentGroup((prev) => (prev === 0 ? testimonialGroups.length - 1 : prev - 1));
+  };
+
+  const getAvatarUrl = (avatarUrl: string | null) => {
+    if (!avatarUrl) {
+      return 'https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//avatar-1.png';
+    }
+    
+    if (avatarUrl.startsWith('http')) {
+      return avatarUrl;
+    }
+    
+    const { data } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(avatarUrl);
+    
+    return data.publicUrl;
+  };
+
+  if (loading) {
+    return (
+      <section className="py-16 md:py-24">
+        <div className="container-custom">
+          <div className="text-center">
+            <p className="text-lg text-gray-600">Carregando depoimentos...</p>
+          </div>
+        </div>
+      </section>
+    );
   }
-];
 
-const Testimonials = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  
-  const handleNext = () => {
-    setActiveIndex((prevIndex) => 
-      prevIndex === testimonialsData.length - 1 ? 0 : prevIndex + 1
+  if (testimonials.length === 0) {
+    return (
+      <section className="py-16 md:py-24">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Esqueça a complicação dos apps. <span className="text-[#6B46C1]">Com a Mila</span>, você encontra o cuidador ideal em poucos cliques
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Sem baixar ou descobrir novos aplicativos. O CareConnect organiza tudo por meio do seu aplicativo de mensagens. Basta adicionar o número da Mila!
+            </p>
+          </div>
+          <div className="text-center">
+            <p className="text-lg text-gray-600">Em breve, novos depoimentos serão adicionados.</p>
+            <p className="text-sm text-gray-500 mt-2">Verifique o console do navegador para logs de debug.</p>
+          </div>
+        </div>
+      </section>
     );
-  };
-  
-  const handlePrev = () => {
-    setActiveIndex((prevIndex) => 
-      prevIndex === 0 ? testimonialsData.length - 1 : prevIndex - 1
-    );
-  };
+  }
 
   return (
-    <section className="section bg-gradient-to-b from-careconnect-blue/10 to-white">
+    <section className="py-16 md:py-24">
       <div className="container-custom">
-        <div className="text-center mb-16">
-          <h2 className="mb-4">O Que Nossos Clientes Dizem</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Não acredite apenas em nossa palavra. Ouça os clientes e famílias que experimentaram nosso cuidado.
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Esqueça a complicação dos apps. <span className="text-[#6B46C1]">Com a Mila</span>, você encontra o cuidador ideal em poucos cliques
+          </h2>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Sem baixar ou descobrir novos aplicativos. O CareConnect organiza tudo por meio do seu aplicativo de mensagens. Basta adicionar o número da Mila!
           </p>
         </div>
-        
-        <div className="relative max-w-4xl mx-auto">
-          <Card className="bg-white shadow-lg">
-            <CardContent className="pt-6">
-              <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-careconnect-blue">
-                  <img 
-                    src={testimonialsData[activeIndex].image} 
-                    alt={testimonialsData[activeIndex].name} 
-                    className="w-full h-full object-cover"
-                  />
+
+        {/* Desktop Testimonials */}
+        <div className="hidden md:block relative">
+          <div className="flex gap-6">
+            {testimonialGroups[currentGroup]?.map((testimonial) => (
+              <Card key={testimonial.id} className="p-6 flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                    <img
+                      src={getAvatarUrl(testimonial.avatar_url)}
+                      alt={testimonial.name}
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//avatar-1.png';
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{testimonial.name}</h3>
+                    {testimonial.role && (
+                      <p className="text-sm text-gray-500">{testimonial.role}</p>
+                    )}
+                    <div className="flex">
+                      {[...Array(testimonial.rating || 5)].map((_, index) => (
+                        <Star key={index} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <blockquote className="text-xl text-gray-700 text-center italic mb-6">
-                "{testimonialsData[activeIndex].text}"
-              </blockquote>
-            </CardContent>
-            <CardFooter className="flex flex-col items-center">
-              <div className="text-center">
-                <h4 className="font-semibold text-careconnect-blue">
-                  {testimonialsData[activeIndex].name}
-                </h4>
-                <p className="text-gray-600">
-                  {testimonialsData[activeIndex].role}
-                </p>
-              </div>
-              <div className="flex gap-2 mt-4">
-                {testimonialsData.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setActiveIndex(index)}
-                    className={`w-3 h-3 rounded-full ${
-                      activeIndex === index 
-                        ? "bg-careconnect-blue" 
-                        : "bg-gray-300"
-                    }`}
-                    aria-label={`Ir para depoimento ${index + 1}`}
-                  />
-                ))}
-              </div>
-            </CardFooter>
-          </Card>
-          
-          <button
-            onClick={handlePrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
-            aria-label="Depoimento anterior"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-careconnect-blue">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-          
-          <button
-            onClick={handleNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white rounded-full p-2 shadow-md hover:bg-gray-100"
-            aria-label="Próximo depoimento"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-careconnect-blue">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-          </button>
+                <p className="text-gray-600">{testimonial.content}</p>
+              </Card>
+            ))}
+          </div>
+
+          {/* Navigation Arrows */}
+          {testimonialGroups.length > 1 && (
+            <>
+              <button
+                onClick={goToPrevGroup}
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-5 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
+                aria-label="Depoimento anterior"
+              >
+                <ChevronLeft className="w-6 h-6 text-gray-600" />
+              </button>
+              <button
+                onClick={goToNextGroup}
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-5 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100 transition-colors"
+                aria-label="Próximo depoimento"
+              >
+                <ChevronRight className="w-6 h-6 text-gray-600" />
+              </button>
+            </>
+          )}
         </div>
+
+        {/* Mobile Testimonials */}
+        <div className="md:hidden">
+          <div className="space-y-4">
+            {testimonials.slice(0, 3).map((testimonial) => (
+              <Card key={testimonial.id} className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                    <img
+                      src={getAvatarUrl(testimonial.avatar_url)}
+                      alt={testimonial.name}
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://dyxkbbojlyppizsgjjxx.supabase.co/storage/v1/object/public/images//avatar-1.png';
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{testimonial.name}</h3>
+                    {testimonial.role && (
+                      <p className="text-sm text-gray-500">{testimonial.role}</p>
+                    )}
+                    <div className="flex">
+                      {[...Array(testimonial.rating || 5)].map((_, index) => (
+                        <Star key={index} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-gray-600">{testimonial.content}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Navigation Dots */}
+        {testimonialGroups.length > 1 && (
+          <div className="flex justify-center mt-8 gap-2">
+            {testimonialGroups.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentGroup(index)}
+                className={`w-3 h-3 rounded-full ${
+                  index === currentGroup ? "bg-[#6B46C1]" : "bg-gray-300"
+                }`}
+                aria-label={`Ver grupo de depoimentos ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
-};
+}
 
 export default Testimonials;

@@ -7,7 +7,9 @@ const CallToAction = () => {
   return (
     <section className="section bg-careconnect-blue text-white">
       <div className="container-custom text-center">
-        <h2 className="text-4xl font-bold mb-6 text-white">Pronto para Receber o Melhor Cuidado?</h2>
+        <h2 className="text-4xl font-bold mb-6 text-white">
+          Pronto para Receber o Melhor Cuidado?
+        </h2>
         <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
           Entre em contato conosco hoje para encontrar o cuidador ideal para você ou seu familiar.
           Nossa equipe está à disposição para esclarecer todas as suas dúvidas.
