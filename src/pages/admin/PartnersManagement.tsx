@@ -121,9 +121,19 @@ export default function PartnersManagement() {
 
   const onSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {
+      // Ensure all values are properly typed as PartnerInsert
+      const partnerData: PartnerInsert = {
+        name: values.name,
+        description: values.description,
+        logo_url: values.logo_url,
+        website_url: values.website_url,
+        status: values.status,
+        type: values.type,
+      };
+
       const { error } = await supabase
         .from('partners')
-        .insert([values]);
+        .insert([partnerData]);
 
       if (error) {
         console.error("Erro ao adicionar parceiro:", error);
