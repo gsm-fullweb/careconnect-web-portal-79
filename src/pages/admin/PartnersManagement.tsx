@@ -1,551 +1,318 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Search, Edit, Trash, Plus, LinkIcon } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+const FormSchema = z.object({
+  name: z.string().min(2, {
+    message: "Nome deve ter pelo menos 2 caracteres.",
+  }),
+  description: z.string().min(10, {
+    message: "Descrição deve ter pelo menos 10 caracteres.",
+  }),
+  logo_url: z.string().url({
+    message: "URL do logo inválida.",
+  }),
+  website_url: z.string().url({
+    message: "URL do website inválida.",
+  }),
+  status: z.enum(['active', 'inactive']),
+  type: z.enum(['hospital', 'farmacia', 'clinica']),
+})
 
 interface Partner {
   id: string;
   name: string;
-  logo_url: string | null;
-  website_url: string | null;
-  type: string | null;
-  status: string | null;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
+  description: string;
+  logo_url: string;
+  website_url: string;
+  status: string;
+  type: string;
 }
 
-const PartnersManagement = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPartner, setEditingPartner] = useState<Partner | null>(null);
-  const [newPartner, setNewPartner] = useState({
-    name: "",
-    logo_url: "",
-    website_url: "",
-    type: "Healthcare Provider",
-    status: "Active",
-    description: ""
-  });
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+export default function PartnersManagement() {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch partners from database
-  const { data: partners = [], isLoading, error } = useQuery({
-    queryKey: ['partners'],
-    queryFn: async () => {
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      logo_url: "",
+      website_url: "",
+      status: "active",
+      type: "hospital",
+    },
+  })
+
+  useEffect(() => {
+    fetchPartners();
+  }, []);
+
+  const fetchPartners = async () => {
+    setLoading(true);
+    try {
       const { data, error } = await supabase
         .from('partners')
         .select('*')
         .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as Partner[];
-    }
-  });
 
-  // Add partner mutation
-  const addPartnerMutation = useMutation({
-    mutationFn: async (partner: Omit<Partner, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
-        .from('partners')
-        .insert([partner])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['partners'] });
-      setIsAddModalOpen(false);
-      setNewPartner({
-        name: "",
-        logo_url: "",
-        website_url: "",
-        type: "Healthcare Provider",
-        status: "Active",
-        description: ""
-      });
-      toast({
-        title: "Partner added",
-        description: "The new partner has been successfully added.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to add partner. Please try again.",
-        variant: "destructive",
-      });
-      console.error("Error adding partner:", error);
+      if (error) {
+        console.error("Erro ao buscar parceiros:", error);
+        setError("Erro ao carregar parceiros.");
+      } else {
+        setPartners(data || []);
+      }
+    } finally {
+      setLoading(false);
     }
-  });
+  };
 
-  // Edit partner mutation
-  const editPartnerMutation = useMutation({
-    mutationFn: async (partner: Partner) => {
-      const { data, error } = await supabase
-        .from('partners')
-        .update({
-          name: partner.name,
-          logo_url: partner.logo_url,
-          website_url: partner.website_url,
-          type: partner.type,
-          status: partner.status,
-          description: partner.description,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', partner.id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['partners'] });
-      setIsEditModalOpen(false);
-      setEditingPartner(null);
-      toast({
-        title: "Partner updated",
-        description: "The partner has been successfully updated.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update partner. Please try again.",
-        variant: "destructive",
-      });
-      console.error("Error updating partner:", error);
-    }
-  });
-
-  // Delete partner mutation
-  const deletePartnerMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const onSubmit = async (values: z.infer<typeof FormSchema>) => {
+    try {
       const { error } = await supabase
         .from('partners')
-        .delete()
-        .eq('id', id);
-      
+        .insert([values]);
+
+      if (error) {
+        console.error("Erro ao adicionar parceiro:", error);
+        toast.error("Erro ao adicionar parceiro.");
+      } else {
+        toast.success("Parceiro adicionado com sucesso!");
+        form.reset();
+        fetchPartners();
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar parceiro:", error);
+      toast.error("Erro ao adicionar parceiro.");
+    }
+  };
+
+  const addSamplePartners = async () => {
+    const samplePartners = [
+      {
+        name: "Hospital São José",
+        description: "Parceria para cuidados hospitalares especializados",
+        logo_url: "/placeholder.svg",
+        website_url: "https://hospitalsaojose.com.br",
+        status: "active",
+        type: "hospital"
+      },
+      {
+        name: "Farmácia Central",
+        description: "Desconto especial em medicamentos para nossos clientes",
+        logo_url: "/placeholder.svg",
+        website_url: "https://farmaciacentral.com.br",
+        status: "active",
+        type: "farmacia"
+      },
+      {
+        name: "Clínica Fisio+",
+        description: "Serviços de fisioterapia com valores especiais",
+        logo_url: "/placeholder.svg",
+        website_url: "https://clinicafisio.com.br",
+        status: "active",
+        type: "clinica"
+      }
+    ];
+
+    try {
+      const { error } = await supabase
+        .from('partners')
+        .insert(samplePartners);
+
       if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['partners'] });
-      toast({
-        title: "Partner deleted",
-        description: "The partner has been successfully deleted.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete partner. Please try again.",
-        variant: "destructive",
-      });
-      console.error("Error deleting partner:", error);
-    }
-  });
 
-  // Filter partners based on search term and filters
-  const filteredPartners = partners.filter(partner => {
-    const matchesSearch = partner.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         (partner.type && partner.type.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesType = typeFilter === "all" || partner.type === typeFilter;
-    const matchesStatus = statusFilter === "all" || partner.status === statusFilter;
-    
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  const handleDeletePartner = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this partner?")) {
-      deletePartnerMutation.mutate(id);
+      toast.success("Parceiros exemplo adicionados com sucesso!");
+      fetchPartners();
+    } catch (error) {
+      console.error("Erro ao adicionar parceiros exemplo:", error);
+      toast.error("Erro ao adicionar parceiros exemplo.");
     }
   };
 
-  const handleAddPartner = (e: React.FormEvent) => {
-    e.preventDefault();
-    addPartnerMutation.mutate(newPartner);
-  };
-
-  const handleEditPartner = (partner: Partner) => {
-    setEditingPartner(partner);
-    setIsEditModalOpen(true);
-  };
-
-  const handleUpdatePartner = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingPartner) {
-      editPartnerMutation.mutate(editingPartner);
-    }
-  };
-
-  if (error) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-red-500">Error loading partners: {error.message}</p>
-      </div>
-    );
-  }
+  if (loading) return <div>Carregando parceiros...</div>;
+  if (error) return <div>Erro: {error}</div>;
 
   return (
-    <div>
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Partners Management</h1>
-          <p className="text-gray-600">Manage healthcare and insurance partners.</p>
-        </div>
-        <Button 
-          className="mt-4 md:mt-0 bg-careconnect-blue hover:bg-careconnect-blue/90"
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Partner
-        </Button>
-      </div>
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Partners</CardTitle>
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-6">Gerenciamento de Parceiros</h1>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Adicionar Novo Parceiro</CardTitle>
+          <CardDescription>Preencha o formulário para adicionar um novo parceiro.</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Search and Filters */}
-          <div className="mb-6 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                placeholder="Search partners..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome do parceiro" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="flex gap-2">
-              <select 
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
-                <option value="all">All Types</option>
-                <option value="Insurance">Insurance</option>
-                <option value="Healthcare Provider">Healthcare Provider</option>
-                <option value="Non-Profit">Non-Profit</option>
-                <option value="Community Organization">Community Organization</option>
-                <option value="Association">Association</option>
-              </select>
-              <select 
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Status</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-          
-          {/* Loading State */}
-          {isLoading ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">Loading partners...</p>
-            </div>
-          ) : filteredPartners.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No partners found.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {filteredPartners.map((partner) => (
-                <Card key={partner.id} className="overflow-hidden">
-                  <CardContent className="p-6">
-                    <div className="h-24 flex items-center justify-center mb-4 bg-gray-100 rounded-md">
-                      {partner.logo_url ? (
-                        <img
-                          src={partner.logo_url}
-                          alt={partner.name}
-                          className="max-h-16 max-w-full object-contain"
-                        />
-                      ) : (
-                        <div className="text-gray-400 text-sm">No logo</div>
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-lg mb-1">{partner.name}</h3>
-                    <p className="text-sm text-gray-500 mb-3">{partner.type || 'No type specified'}</p>
-                    
-                    {partner.website_url && (
-                      <div className="flex items-center mb-4">
-                        <LinkIcon className="w-4 h-4 text-gray-400 mr-2" />
-                        <a 
-                          href={partner.website_url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm text-careconnect-blue hover:underline truncate"
-                        >
-                          {partner.website_url}
-                        </a>
-                      </div>
-                    )}
-                    
-                    {partner.description && (
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{partner.description}</p>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        partner.status === "Active" 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-red-100 text-red-800"
-                      }`}>
-                        {partner.status || 'Unknown'}
-                      </span>
-                      <div className="flex space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditPartner(partner)}
-                        >
-                          <Edit className="w-4 h-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => handleDeletePartner(partner.id)}
-                          disabled={deletePartnerMutation.isPending}
-                        >
-                          <Trash className="w-4 h-4" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Descrição do parceiro" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="logo_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL do Logo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="URL do logo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="website_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL do Website</FormLabel>
+                    <FormControl>
+                      <Input placeholder="URL do website" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="inactive">Inativo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="hospital">Hospital</SelectItem>
+                        <SelectItem value="farmacia">Farmácia</SelectItem>
+                        <SelectItem value="clinica">Clínica</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Adicionar Parceiro</Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
-      
-      {/* Add Partner Modal */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsAddModalOpen(false)}></div>
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-6">
-              <h3 className="text-xl font-semibold mb-4">Add New Partner</h3>
-              <form onSubmit={handleAddPartner}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Partner Name *
-                    </label>
-                    <Input
-                      required
-                      value={newPartner.name}
-                      onChange={(e) => setNewPartner({...newPartner, name: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Logo URL
-                    </label>
-                    <Input
-                      type="url"
-                      value={newPartner.logo_url}
-                      onChange={(e) => setNewPartner({...newPartner, logo_url: e.target.value})}
-                      placeholder="https://example.com/logo.png"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Website URL
-                    </label>
-                    <Input
-                      type="url"
-                      value={newPartner.website_url}
-                      onChange={(e) => setNewPartner({...newPartner, website_url: e.target.value})}
-                      placeholder="https://example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <Input
-                      value={newPartner.description}
-                      onChange={(e) => setNewPartner({...newPartner, description: e.target.value})}
-                      placeholder="Brief description of the partner"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Partner Type
-                    </label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
-                      value={newPartner.type}
-                      onChange={(e) => setNewPartner({...newPartner, type: e.target.value})}
-                    >
-                      <option value="Insurance">Insurance</option>
-                      <option value="Healthcare Provider">Healthcare Provider</option>
-                      <option value="Non-Profit">Non-Profit</option>
-                      <option value="Community Organization">Community Organization</option>
-                      <option value="Association">Association</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
-                      value={newPartner.status}
-                      onChange={(e) => setNewPartner({...newPartner, status: e.target.value})}
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="mt-6 flex justify-end space-x-3">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => setIsAddModalOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-careconnect-blue hover:bg-careconnect-blue/90"
-                    disabled={addPartnerMutation.isPending}
-                  >
-                    {addPartnerMutation.isPending ? 'Adding...' : 'Add Partner'}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Edit Partner Modal */}
-      {isEditModalOpen && editingPartner && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setIsEditModalOpen(false)}></div>
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-6">
-              <h3 className="text-xl font-semibold mb-4">Edit Partner</h3>
-              <form onSubmit={handleUpdatePartner}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Partner Name *
-                    </label>
-                    <Input
-                      required
-                      value={editingPartner.name}
-                      onChange={(e) => setEditingPartner({...editingPartner, name: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Logo URL
-                    </label>
-                    <Input
-                      type="url"
-                      value={editingPartner.logo_url || ""}
-                      onChange={(e) => setEditingPartner({...editingPartner, logo_url: e.target.value})}
-                      placeholder="https://example.com/logo.png"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Website URL
-                    </label>
-                    <Input
-                      type="url"
-                      value={editingPartner.website_url || ""}
-                      onChange={(e) => setEditingPartner({...editingPartner, website_url: e.target.value})}
-                      placeholder="https://example.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
-                    <Input
-                      value={editingPartner.description || ""}
-                      onChange={(e) => setEditingPartner({...editingPartner, description: e.target.value})}
-                      placeholder="Brief description of the partner"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Partner Type
-                    </label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
-                      value={editingPartner.type || "Healthcare Provider"}
-                      onChange={(e) => setEditingPartner({...editingPartner, type: e.target.value})}
-                    >
-                      <option value="Insurance">Insurance</option>
-                      <option value="Healthcare Provider">Healthcare Provider</option>
-                      <option value="Non-Profit">Non-Profit</option>
-                      <option value="Community Organization">Community Organization</option>
-                      <option value="Association">Association</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
-                    </label>
-                    <select
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-careconnect-blue bg-white"
-                      value={editingPartner.status || "Active"}
-                      onChange={(e) => setEditingPartner({...editingPartner, status: e.target.value})}
-                    >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="mt-6 flex justify-end space-x-3">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => setIsEditModalOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-careconnect-blue hover:bg-careconnect-blue/90"
-                    disabled={editPartnerMutation.isPending}
-                  >
-                    {editPartnerMutation.isPending ? 'Updating...' : 'Update Partner'}
-                  </Button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <Button onClick={addSamplePartners} className="mb-6">Adicionar Parceiros Exemplo</Button>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[200px]">Nome</TableHead>
+            <TableHead>Descrição</TableHead>
+            <TableHead>Logo URL</TableHead>
+            <TableHead>Website URL</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Tipo</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {partners.map((partner) => (
+            <TableRow key={partner.id}>
+              <TableCell className="font-medium">{partner.name}</TableCell>
+              <TableCell>{partner.description}</TableCell>
+              <TableCell>{partner.logo_url}</TableCell>
+              <TableCell>{partner.website_url}</TableCell>
+              <TableCell>{partner.status}</TableCell>
+              <TableCell>{partner.type}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
-};
-
-export default PartnersManagement;
+}

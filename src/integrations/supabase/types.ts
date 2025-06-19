@@ -70,6 +70,7 @@ export type Database = {
           email: string
           endereco: string
           escolaridade: string | null
+          estado: string | null
           experiencia: string | null
           fumante: string
           id: number
@@ -108,6 +109,7 @@ export type Database = {
           email: string
           endereco: string
           escolaridade?: string | null
+          estado?: string | null
           experiencia?: string | null
           fumante: string
           id?: never
@@ -146,6 +148,7 @@ export type Database = {
           email?: string
           endereco?: string
           escolaridade?: string | null
+          estado?: string | null
           experiencia?: string | null
           fumante?: string
           id?: never
@@ -397,14 +400,14 @@ export type Database = {
           website_url: string
         }
         Insert: {
-          created_at: string
+          created_at?: string
           description: string
-          id: string
+          id?: string
           logo_url: string
           name: string
           status: string
           type?: string | null
-          updated_at: string
+          updated_at?: string
           website_url: string
         }
         Update: {
@@ -424,7 +427,9 @@ export type Database = {
         Row: {
           created_at: string | null
           email: string
+          first_name: string | null
           id: string
+          last_name: string | null
           name: string | null
           phone: string | null
           updated_at: string | null
@@ -433,7 +438,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           email: string
+          first_name?: string | null
           id: string
+          last_name?: string | null
           name?: string | null
           phone?: string | null
           updated_at?: string | null
@@ -442,7 +449,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           email?: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           name?: string | null
           phone?: string | null
           updated_at?: string | null
@@ -468,14 +477,14 @@ export type Database = {
           avatar_url?: string | null
           caregiver_id?: string | null
           content: string
-          created_at: string
+          created_at?: string
           customer_id: string
-          id: string
+          id?: string
           name: string
           published: boolean
           rating: number
           role: string
-          updated_at: string
+          updated_at?: string
         }
         Update: {
           avatar_url?: string | null
