@@ -33,7 +33,7 @@ const Assinatura = () => {
 
   useEffect(() => {
     if (preferenceId && showMercadoPagoForm && typeof window !== 'undefined' && window.MercadoPago) {
-      const mp = new window.MercadoPago('TEST-your-public-key-here', {
+      const mp = new window.MercadoPago('APP_USR-54942fdb-b693-4ed4-a97f-58908ed89825', {
         locale: 'pt-BR'
       });
 
@@ -90,19 +90,50 @@ const Assinatura = () => {
     setLoading(true);
     
     try {
-      // Simular criação de preferência do Mercado Pago
-      // Em produção, isso seria uma chamada para sua API backend
-      const mockPreferenceId = `mock-preference-${Date.now()}`;
-      
-      // Simular delay da API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setPreferenceId(mockPreferenceId);
-      setShowMercadoPagoForm(true);
-      
-      toast.success(`Plano ${subscription.plan} selecionado!`, {
-        description: "Você será redirecionado para o pagamento.",
+      // Criar preferência de pagamento com Mercado Pago
+      const preference = {
+        items: [
+          {
+            title: `Plano ${subscription.plan} - CareConnect`,
+            unit_price: parseFloat(subscription.price),
+            quantity: 1,
+            currency_id: 'BRL'
+          }
+        ],
+        back_urls: {
+          success: window.location.origin + '/assinatura/sucesso',
+          failure: window.location.origin + '/assinatura/falha',
+          pending: window.location.origin + '/assinatura/pendente'
+        },
+        auto_return: 'approved',
+        payment_methods: {
+          excluded_payment_types: [],
+          installments: 12
+        },
+        external_reference: `subscription-${subscription.plan}-${Date.now()}`
+      };
+
+      // Simular criação de preferência
+      const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer APP_USR-8971928988049703-041413-7d628f5f23c1c299419433b25a0d273e-686166954'
+        },
+        body: JSON.stringify(preference)
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPreferenceId(data.id);
+        setShowMercadoPagoForm(true);
+        
+        toast.success(`Plano ${subscription.plan} selecionado!`, {
+          description: "Você será redirecionado para o pagamento.",
+        });
+      } else {
+        throw new Error('Erro ao criar preferência de pagamento');
+      }
       
     } catch (error) {
       console.error('Erro ao criar preferência:', error);
