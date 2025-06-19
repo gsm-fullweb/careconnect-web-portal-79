@@ -125,7 +125,7 @@ export default function PreCadastro() {
           nome: data.name,
           email: data.email.toLowerCase().trim(),
           telefone: data.whatsapp,
-          data_nascimento: '', // Será preenchido posteriormente
+          data_nascimento: null, // Changed from empty string to null
           fumante: 'Não',
           escolaridade: '',
           possui_experiencia: 'Não',
