@@ -1,24 +1,27 @@
+
 import Layout from "@/components/layout/Layout";
-import Hero from "@/components/home/Hero";
-import Services from "@/components/home/Services";
+import NewHero from "@/components/home/NewHero";
+import Stats from "@/components/home/Stats";
+import NewHowItWorks from "@/components/home/NewHowItWorks";
+import NewWhyChooseUs from "@/components/home/NewWhyChooseUs";
+import NewServices from "@/components/home/NewServices";
 import AboutSection from "@/components/home/AboutSection";
 import Testimonials from "@/components/home/Testimonials";
 import Partners from "@/components/home/Partners";
-import CallToAction from "@/components/home/CallToAction";
-import HowItWorks from "@/components/home/HowItWorks";
-import WhyChooseUs from "@/components/home/WhyChooseUs";
+import NewCallToAction from "@/components/home/NewCallToAction";
 
 const Home = () => {
   return (
     <Layout>
-      <Hero />
-      <HowItWorks />
-      <WhyChooseUs />
-      <Services />
+      <NewHero />
+      <Stats />
+      <NewHowItWorks />
+      <NewWhyChooseUs />
+      <NewServices />
       <AboutSection />
       <Testimonials />
       <Partners />
-      <CallToAction />
+      <NewCallToAction />
     </Layout>
   );
 };
