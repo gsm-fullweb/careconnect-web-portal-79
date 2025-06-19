@@ -125,12 +125,12 @@ export default function PreCadastro() {
           nome: data.name,
           email: data.email.toLowerCase().trim(),
           telefone: data.whatsapp,
-          data_nascimento: null, // Changed from empty string to null
+          data_nascimento: null,
           fumante: 'Não',
           escolaridade: '',
           possui_experiencia: 'Não',
           disponivel_dormir_local: 'Não',
-          status_candidatura: 'Em análise',
+          status_candidatura: 'Cadastro incompleto',
           cidade: '',
           endereco: 'A ser preenchido',
           cep: '00000-000',
@@ -156,12 +156,12 @@ export default function PreCadastro() {
 
       console.log("Candidato criado:", candidateData);
 
-      toast.success("Cadastro realizado com sucesso! Verifique seu email para confirmar a conta.");
+      toast.success("Cadastro de acesso criado! Agora complete suas informações profissionais.");
       
-      // Redirecionar para login após 3 segundos
+      // Redirecionar para cadastrar-cuidador em vez do login
       setTimeout(() => {
-        navigate("/admin/login");
-      }, 3000);
+        navigate("/cadastrar-cuidador");
+      }, 2000);
 
     } catch (error) {
       console.error("Erro no cadastro:", error);
@@ -284,9 +284,8 @@ export default function PreCadastro() {
 
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>🔐 Acesso:</strong> Após criar sua conta, você poderá 
-                      fazer login e acessar sua área do cuidador para completar 
-                      suas informações profissionais.
+                      <strong>🔐 Próximo passo:</strong> Após criar sua conta, você será 
+                      direcionado para completar suas informações profissionais.
                     </p>
                   </div>
 
@@ -295,7 +294,7 @@ export default function PreCadastro() {
                     className="w-full bg-primary hover:bg-primary/90"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Criando Conta..." : "Criar Conta de Acesso"}
+                    {isSubmitting ? "Criando Conta..." : "Criar Conta e Continuar"}
                   </Button>
                 </form>
               </Form>
