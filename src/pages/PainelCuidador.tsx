@@ -13,7 +13,7 @@ import { ProfessionalSection } from "@/components/caregiver/ProfessionalSection"
 import { ReferencesSection } from "@/components/caregiver/ReferencesSection";
 
 const PainelCuidador = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [candidatoData, setCandidatoData] = useState<any>(null);
@@ -25,32 +25,89 @@ const PainelCuidador = () => {
 
   useEffect(() => {
     const fetchCandidatoData = async () => {
+      console.log("=== INÍCIO DO CARREGAMENTO DE DADOS ===");
+      console.log("User:", user);
+      console.log("Auth loading:", authLoading);
+
+      if (authLoading) {
+        console.log("Aguardando autenticação...");
+        return;
+      }
+
       if (!user?.email) {
+        console.log("Usuário não autenticado, redirecionando...");
         setLoading(false);
         return;
       }
 
       try {
+        console.log("Buscando dados do candidato para email:", user.email);
+        
         const { data, error } = await supabase
           .from('candidatos_cuidadores_rows')
           .select('*')
           .eq('email', user.email)
-          .single();
+          .maybeSingle(); // Usar maybeSingle ao invés de single
+
+        console.log("Resultado da busca:", { data, error });
 
         if (error) {
           console.error('Erro ao buscar dados do candidato:', error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível carregar seus dados. Verifique se você está logado corretamente.",
-            variant: "destructive"
-          });
-          return;
+          // Não mostrar erro se não encontrar dados
+          if (error.code !== 'PGRST116') {
+            toast({
+              title: "Erro",
+              description: "Erro ao carregar dados. Tente novamente.",
+              variant: "destructive"
+            });
+          }
         }
 
-        setCandidatoData(data);
-        setEditFormData({...data});
+        if (data) {
+          console.log("Dados do candidato encontrados:", data);
+          setCandidatoData(data);
+          setEditFormData({...data});
+        } else {
+          console.log("Nenhum dado encontrado, mas usuário está autenticado");
+          // Criar um registro básico se não existir
+          const basicData = {
+            nome: user?.user_metadata?.name || '',
+            email: user.email,
+            telefone: user?.user_metadata?.whatsapp || '',
+            data_nascimento: null,
+            fumante: 'Não',
+            escolaridade: '',
+            possui_experiencia: 'Não',
+            disponivel_dormir_local: 'Não',
+            status_candidatura: 'Cadastro incompleto',
+            cidade: '',
+            endereco: 'A ser preenchido',
+            cep: '00000-000',
+            possui_filhos: "Não",
+            cursos: 'A ser preenchido',
+            descricao_experiencia: 'A ser preenchido no cadastro completo',
+            disponibilidade_horarios: 'A ser definido',
+            referencias: 'A ser preenchido no cadastro completo',
+            data_cadastro: new Date().toISOString().split('T')[0]
+          };
+          
+          // Tentar criar o registro
+          const { data: newData, error: insertError } = await supabase
+            .from('candidatos_cuidadores_rows')
+            .insert(basicData)
+            .select()
+            .single();
+            
+          if (insertError) {
+            console.error("Erro ao criar registro básico:", insertError);
+          } else {
+            console.log("Registro básico criado:", newData);
+            setCandidatoData(newData);
+            setEditFormData({...newData});
+          }
+        }
       } catch (error) {
-        console.error('Erro ao buscar candidato:', error);
+        console.error('Erro geral ao buscar candidato:', error);
         toast({
           title: "Erro",
           description: "Erro ao carregar dados. Tente novamente.",
@@ -62,7 +119,7 @@ const PainelCuidador = () => {
     };
 
     fetchCandidatoData();
-  }, [user]);
+  }, [user, authLoading, toast]);
 
   // Check for changes
   useEffect(() => {
@@ -73,27 +130,9 @@ const PainelCuidador = () => {
   }, [candidatoData, editFormData]);
 
   // Redirect if not authenticated
-  if (!user) {
+  if (!authLoading && !user) {
+    console.log("Redirecionando para login - usuário não autenticado");
     return <Navigate to="/admin/login" replace />;
-  }
-
-  // Redirect if not a caregiver (no data found)
-  if (!loading && !candidatoData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-4">Acesso Negado</h2>
-            <p className="text-gray-600 mb-4">
-              Você não tem permissão para acessar esta página ou seus dados não foram encontrados.
-            </p>
-            <Button onClick={() => supabase.auth.signOut()}>
-              Fazer Login Novamente
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -187,15 +226,15 @@ const PainelCuidador = () => {
     'experiencia', 'referencias'
   ];
   
-  const isRegistrationComplete = requiredFields.every(field => 
-    candidatoData?.[field] && candidatoData[field].trim() !== ''
+  const isRegistrationComplete = candidatoData && requiredFields.every(field => 
+    candidatoData[field] && candidatoData[field].toString().trim() !== '' && candidatoData[field] !== 'A ser preenchido'
   );
 
-  const completionPercentage = Math.round(
+  const completionPercentage = candidatoData ? Math.round(
     (requiredFields.filter(field => 
-      candidatoData?.[field] && candidatoData[field].trim() !== ''
+      candidatoData[field] && candidatoData[field].toString().trim() !== '' && candidatoData[field] !== 'A ser preenchido'
     ).length / requiredFields.length) * 100
-  );
+  ) : 0;
 
   const getStatusIcon = () => {
     if (isRegistrationComplete) return <CheckCircle className="w-5 h-5 text-green-600" />;
@@ -209,13 +248,44 @@ const PainelCuidador = () => {
     return 'bg-red-50 border-red-200';
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-careconnect-blue border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando seus dados...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Se não tem dados do candidato, mostrar opção para completar cadastro
+  if (!candidatoData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-semibold mb-4">Complete seu cadastro</h2>
+            <p className="text-gray-600 mb-4">
+              Para acessar o painel do cuidador, você precisa completar seu cadastro profissional.
+            </p>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => navigate('/cadastrar-cuidador')}
+                className="w-full bg-careconnect-blue hover:bg-careconnect-blue/90"
+              >
+                Completar Cadastro
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleLogout}
+                className="w-full"
+              >
+                Sair
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
