@@ -13,62 +13,63 @@ export type Database = {
         Row: {
           author_id: string | null
           content: string
+          cover_image: string | null
           created_at: string | null
           excerpt: string | null
           id: string
           published: boolean | null
+          slug: string | null
           title: string
+          updated_at: string | null
         }
         Insert: {
           author_id?: string | null
           content: string
+          cover_image?: string | null
           created_at?: string | null
           excerpt?: string | null
           id?: string
           published?: boolean | null
+          slug?: string | null
           title: string
+          updated_at?: string | null
         }
         Update: {
           author_id?: string | null
           content?: string
+          cover_image?: string | null
           created_at?: string | null
           excerpt?: string | null
           id?: string
           published?: boolean | null
+          slug?: string | null
           title?: string
+          updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "blog_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       candidatos_cuidadores_rows: {
         Row: {
           ativo: string | null
           cargo: string | null
           cep: string
-          cidade: string
+          cidade: string | null
           coren: string | null
-          cpf: string | null
+          cpf: number | null
           crefito: string | null
           crm: string | null
-          cursos: string | null
+          cursos: string
           data_cadastro: string | null
-          data_nascimento: string
+          data_nascimento: string | null
           Declaracao: string | null
+          desconfortos_atividades: string | null
           descricao: string | null
-          descricao_experiencia: string | null
-          disponibilidade_horarios: string | null
+          descricao_experiencia: string
+          disponibilidade_horarios: string
           disponivel_dormir_local: string
           email: string
           endereco: string
-          escolaridade: string
-          estado: string | null
+          escolaridade: string | null
           experiencia: string | null
           fumante: string
           id: number
@@ -79,37 +80,37 @@ export type Database = {
           referencia_1: string | null
           referencia_2: string | null
           referencia_3: string | null
-          referencias: string | null
-          RG: string | null
-          status_candidatura: string
+          referencias: string
+          RG: number | null
+          status_candidatura: string | null
           telefone: string
           ultima_atualizacao: string | null
-          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           ativo?: string | null
           cargo?: string | null
           cep: string
-          cidade: string
+          cidade?: string | null
           coren?: string | null
-          cpf?: string | null
+          cpf?: number | null
           crefito?: string | null
           crm?: string | null
-          cursos?: string | null
+          cursos: string
           data_cadastro?: string | null
-          data_nascimento: string
+          data_nascimento?: string | null
           Declaracao?: string | null
+          desconfortos_atividades?: string | null
           descricao?: string | null
-          descricao_experiencia?: string | null
-          disponibilidade_horarios?: string | null
+          descricao_experiencia: string
+          disponibilidade_horarios: string
           disponivel_dormir_local: string
           email: string
           endereco: string
-          escolaridade: string
-          estado?: string | null
+          escolaridade?: string | null
           experiencia?: string | null
           fumante: string
-          id?: number
+          id?: never
           nome: string
           perfil_profissional?: string | null
           possui_experiencia: string
@@ -117,37 +118,37 @@ export type Database = {
           referencia_1?: string | null
           referencia_2?: string | null
           referencia_3?: string | null
-          referencias?: string | null
-          RG?: string | null
-          status_candidatura: string
+          referencias: string
+          RG?: number | null
+          status_candidatura?: string | null
           telefone: string
           ultima_atualizacao?: string | null
-          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           ativo?: string | null
           cargo?: string | null
           cep?: string
-          cidade?: string
+          cidade?: string | null
           coren?: string | null
-          cpf?: string | null
+          cpf?: number | null
           crefito?: string | null
           crm?: string | null
-          cursos?: string | null
+          cursos?: string
           data_cadastro?: string | null
-          data_nascimento?: string
+          data_nascimento?: string | null
           Declaracao?: string | null
+          desconfortos_atividades?: string | null
           descricao?: string | null
-          descricao_experiencia?: string | null
-          disponibilidade_horarios?: string | null
+          descricao_experiencia?: string
+          disponibilidade_horarios?: string
           disponivel_dormir_local?: string
           email?: string
           endereco?: string
-          escolaridade?: string
-          estado?: string | null
+          escolaridade?: string | null
           experiencia?: string | null
           fumante?: string
-          id?: number
+          id?: never
           nome?: string
           perfil_profissional?: string | null
           possui_experiencia?: string
@@ -155,40 +156,106 @@ export type Database = {
           referencia_1?: string | null
           referencia_2?: string | null
           referencia_3?: string | null
-          referencias?: string | null
-          RG?: string | null
-          status_candidatura?: string
+          referencias?: string
+          RG?: number | null
+          status_candidatura?: string | null
           telefone?: string
           ultima_atualizacao?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          active: boolean | null
+          app: string | null
+          bot_message: string | null
+          conversation_id: string | null
+          created_at: string
+          id: number
+          message_type: string | null
+          phone: string | null
+          user_id: string | null
+          user_message: string | null
+          user_name: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          app?: string | null
+          bot_message?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          message_type?: string | null
+          phone?: string | null
+          user_id?: string | null
+          user_message?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          app?: string | null
+          bot_message?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          message_type?: string | null
+          phone?: string | null
+          user_id?: string | null
+          user_message?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      chats: {
+        Row: {
+          app: string | null
+          conversation_id: string | null
+          created_at: string
+          id: number
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          app?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          app?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: number
+          phone?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
       content_items: {
         Row: {
-          content: Json
-          created_at: string
+          content: Json | null
           id: string
-          last_updated: string
-          status: string
+          last_updated: string | null
+          status: string | null
           title: string
           type: string
         }
         Insert: {
-          content: Json
-          created_at?: string
+          content?: Json | null
           id?: string
-          last_updated?: string
-          status: string
+          last_updated?: string | null
+          status?: string | null
           title: string
           type: string
         }
         Update: {
-          content?: Json
-          created_at?: string
+          content?: Json | null
           id?: string
-          last_updated?: string
-          status?: string
+          last_updated?: string | null
+          status?: string | null
           title?: string
           type?: string
         }
@@ -196,139 +263,190 @@ export type Database = {
       }
       customer: {
         Row: {
-          address: string | null
-          birth_date: string | null
-          cep: string | null
-          city: string | null
+          address: string
+          birth_date: string
+          cep: string
+          city: string
           created_at: string
           email: string
-          has_children: boolean | null
+          has_children: boolean
           id: string
           name: string
-          necessity: string | null
+          necessity: string
           observations: string | null
-          smoker: boolean | null
-          special_care: string | null
-          state: string | null
-          status: string | null
+          smoker: boolean
+          special_care: string
+          state: string
+          status: string
           updated_at: string
           user_id: string | null
-          whatsapp: string | null
+          whatsapp: string
         }
         Insert: {
-          address?: string | null
-          birth_date?: string | null
-          cep?: string | null
-          city?: string | null
-          created_at?: string
+          address: string
+          birth_date: string
+          cep: string
+          city: string
+          created_at: string
           email: string
-          has_children?: boolean | null
-          id?: string
+          has_children: boolean
+          id: string
           name: string
-          necessity?: string | null
+          necessity: string
           observations?: string | null
-          smoker?: boolean | null
-          special_care?: string | null
-          state?: string | null
-          status?: string | null
-          updated_at?: string
+          smoker: boolean
+          special_care: string
+          state: string
+          status: string
+          updated_at: string
           user_id?: string | null
-          whatsapp?: string | null
+          whatsapp: string
         }
         Update: {
-          address?: string | null
-          birth_date?: string | null
-          cep?: string | null
-          city?: string | null
+          address?: string
+          birth_date?: string
+          cep?: string
+          city?: string
           created_at?: string
           email?: string
-          has_children?: boolean | null
+          has_children?: boolean
           id?: string
           name?: string
-          necessity?: string | null
+          necessity?: string
           observations?: string | null
-          smoker?: boolean | null
-          special_care?: string | null
-          state?: string | null
-          status?: string | null
+          smoker?: boolean
+          special_care?: string
+          state?: string
+          status?: string
           updated_at?: string
           user_id?: string | null
-          whatsapp?: string | null
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          active: boolean | null
+          app: string | null
+          cliente_name: string | null
+          created_at: string
+          email: string | null
+          id: number
+          lat: string | null
+          location: string | null
+          long: string | null
+          phone: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          app?: string | null
+          cliente_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: number
+          lat?: string | null
+          location?: string | null
+          long?: string | null
+          phone?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          app?: string | null
+          cliente_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: number
+          lat?: string | null
+          location?: string | null
+          long?: string | null
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          content: string | null
+          embedding: string | null
+          id: number
+          metadata: Json | null
+        }
+        Insert: {
+          content?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
+        }
+        Update: {
+          content?: string | null
+          embedding?: string | null
+          id?: number
+          metadata?: Json | null
         }
         Relationships: []
       }
       partners: {
         Row: {
           created_at: string
-          description: string | null
+          description: string
           id: string
-          logo_url: string | null
+          logo_url: string
           name: string
-          status: string | null
+          status: string
           type: string | null
           updated_at: string
-          website_url: string | null
+          website_url: string
         }
         Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          logo_url?: string | null
+          created_at: string
+          description: string
+          id: string
+          logo_url: string
           name: string
-          status?: string | null
+          status: string
           type?: string | null
-          updated_at?: string
-          website_url?: string | null
+          updated_at: string
+          website_url: string
         }
         Update: {
           created_at?: string
-          description?: string | null
+          description?: string
           id?: string
-          logo_url?: string | null
+          logo_url?: string
           name?: string
-          status?: string | null
+          status?: string
           type?: string | null
           updated_at?: string
-          website_url?: string | null
+          website_url?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string | null
-          first_name: string | null
+          created_at: string | null
+          email: string
           id: string
-          last_name: string | null
+          name: string | null
           phone: string | null
-          type: string | null
-          updated_at: string
-          user_role: string | null
+          updated_at: string | null
+          user_role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          first_name?: string | null
+          created_at?: string | null
+          email: string
           id: string
-          last_name?: string | null
+          name?: string | null
           phone?: string | null
-          type?: string | null
-          updated_at?: string
-          user_role?: string | null
+          updated_at?: string | null
+          user_role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string | null
-          first_name?: string | null
+          created_at?: string | null
+          email?: string
           id?: string
-          last_name?: string | null
+          name?: string | null
           phone?: string | null
-          type?: string | null
-          updated_at?: string
-          user_role?: string | null
+          updated_at?: string | null
+          user_role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
       }
@@ -336,41 +454,41 @@ export type Database = {
         Row: {
           avatar_url: string | null
           caregiver_id: string | null
-          content: string | null
-          created_at: string | null
-          customer_id: string | null
+          content: string
+          created_at: string
+          customer_id: string
           id: string
-          name: string | null
-          published: boolean | null
-          rating: number | null
-          role: string | null
-          updated_at: string | null
+          name: string
+          published: boolean
+          rating: number
+          role: string
+          updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           caregiver_id?: string | null
-          content?: string | null
-          created_at?: string | null
-          customer_id?: string | null
-          id?: string
-          name?: string | null
-          published?: boolean | null
-          rating?: number | null
-          role?: string | null
-          updated_at?: string | null
+          content: string
+          created_at: string
+          customer_id: string
+          id: string
+          name: string
+          published: boolean
+          rating: number
+          role: string
+          updated_at: string
         }
         Update: {
           avatar_url?: string | null
           caregiver_id?: string | null
-          content?: string | null
-          created_at?: string | null
-          customer_id?: string | null
+          content?: string
+          created_at?: string
+          customer_id?: string
           id?: string
-          name?: string | null
-          published?: boolean | null
-          rating?: number | null
-          role?: string | null
-          updated_at?: string | null
+          name?: string
+          published?: boolean
+          rating?: number
+          role?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -379,10 +497,110 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
+      match_documents: {
+        Args: { query_embedding: string; match_count?: number; filter?: Json }
+        Returns: {
+          id: number
+          content: string
+          metadata: Json
+          similarity: number
+        }[]
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "admin" | "cuidador" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -497,6 +715,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["admin", "cuidador", "cliente"],
+    },
   },
 } as const
