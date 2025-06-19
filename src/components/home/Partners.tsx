@@ -1,7 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+// ✅ Interface: Partner
+// 📌 Description: Defines the structure of a partner object from database
 interface Partner {
   id: string;
   name: string;
