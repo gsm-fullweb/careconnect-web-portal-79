@@ -9,9 +9,8 @@ interface Partner {
   logo_url: string | null;
   website_url: string | null;
   description: string | null;
-  published: boolean | null;
-  type: string;
-  status: string;
+  type: string | null;
+  status: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -129,9 +128,11 @@ const Partners = () => {
                     {partner.name}
                   </h3>
                   
-                  <p className="text-sm text-gray-500 mb-3">
-                    {partner.type}
-                  </p>
+                  {partner.type && (
+                    <p className="text-sm text-gray-500 mb-3">
+                      {partner.type}
+                    </p>
+                  )}
                   
                   {partner.website_url && (
                     <a 
